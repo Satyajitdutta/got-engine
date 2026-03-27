@@ -58,8 +58,10 @@ module.exports = async function handler(req, res) {
     }
   } catch(e) { res.status(400).json({ error: 'Invalid JSON' }); return; }
 
-  const { provider, apiKey, model, system, user, maxTokens, baseUrl, isJson } = body;
+  const { provider, apiKey: clientKey, model, system, user, maxTokens, baseUrl, isJson } = body;
   if (!provider || !user) { res.status(400).json({ error: 'Missing provider or user' }); return; }
+  // Use client-supplied key; fall back to server env vars so the hosted demo works without user entering a key
+  const apiKey = clientKey || (provider === 'gemini' ? process.env.GEMINI_API_KEY : process.env.OPENAI_API_KEY) || '';
 
   try {
     let result;
