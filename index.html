@@ -968,7 +968,7 @@
 
     // ── SYSTEM PROMPTS ──────────────────────────────────────────────────────────
 
-    var QUESTION_SYS = 'Ask 4 probing questions about this situation. Questions should feel personal and slightly uncomfortable — they cut across hidden dimensions the person has not mentioned. Return ONLY valid JSON, no markdown: {"questions":[{"id":"q1","text":"the question","domain":"PSYCHOLOGICAL","reveals":"hidden truth"}]} Exactly 4 questions. No yes/no questions. Ask about relationships, identity, fears, what they are avoiding. Return ONLY the JSON object starting with { and ending with }.';
+    var QUESTION_SYS = 'Generate exactly 4 binary clarifying questions about this scenario. CRITICAL RULE: Every question MUST be answerable with only Yes, No, or Not Applicable — no exceptions. Questions must start with "Is", "Are", "Have", "Has", "Do", "Does", "Did", "Will", or "Would". They should uncover hidden context across personal, relational, financial, or situational dimensions. BAD example (open-ended, forbidden): "What does this reveal about your identity?" GOOD example (binary, required): "Is this situation directly affecting someone close to you?" Return ONLY valid JSON, no markdown: {"questions":[{"id":"q1","text":"the question","domain":"PSYCHOLOGICAL","reveals":"hidden truth"}]} Exactly 4 questions. Return ONLY the JSON object starting with { and ending with }.';
 
     var GRAPH_SYS = [
       'Extract a causal reasoning graph. Return ONLY a valid JSON object.',
