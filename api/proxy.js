@@ -74,7 +74,7 @@ module.exports = async function handler(req, res) {
       );
     }
     else if (provider === 'gemini') {
-      const mname = model || 'gemini-2.0-flash';
+      const mname = model || 'gemini-2.5-pro';
       const gcfg = isJson
         ? { maxOutputTokens: 8192, temperature: 0.1, response_mime_type: 'application/json' }
         : { maxOutputTokens: mt, temperature: 0.4 };
