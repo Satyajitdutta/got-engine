@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOT Engine — Universal Reasoning</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap');
+:root{
+  --bg:#06060e;--s1:#0b0b16;--s2:#10101e;--bd:#1e1e35;--bd2:#2a2a45;
+  --gold:#e8b84b;--gdim:#5a4510;--gold2:#f5d080;
+  --blue:#3a7fd4;--red:#d04545;--green:#3aaa5a;--amber:#e07830;
+  --teal:#28a888;--purple:#8860d4;
+  --txt:#d8d8ee;--tdim:#6060a0;--tmut:#303050;
+  --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);min-height:100vh;font-size:14px}
+.hdr{background:var(--s1);border-bottom:1px solid var(--bd);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--gold);letter-spacing:-1px;margin-right:10px}
+.logo-s{font-family:var(--mono);font-size:8px;color:var(--tdim);letter-spacing:3px;text-transform:uppercase}
+.badge{font-family:var(--mono);font-size:8px;color:var(--teal);border:1px solid #1a5a48;padding:3px 10px;letter-spacing:2px}
+.wrap{max-width:100%;padding:16px;}
+.panel{background:var(--s1);border:1px solid var(--bd);margin-bottom:14px}
+.ph{padding:9px 16px;border-bottom:1px solid var(--bd);background:var(--s2);display:flex;align-items:center;gap:9px}
+.pn{font-family:var(--mono);font-size:8px;color:var(--gold);width:18px;height:18px;border:1px solid var(--gdim);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pt{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase}
+.pb{padding:16px}
+label{display:block;font-family:var(--mono);font-size:8px;color:var(--tdim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--bd);color:var(--txt);font-family:var(--mono);font-size:10px;padding:8px 11px;outline:none;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--gdim)}
+textarea{resize:vertical;min-height:80px;line-height:1.7}
+select option{background:var(--s2)}
+.hint{font-family:var(--mono);font-size:8px;color:var(--tmut);margin-top:3px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:12px}
+.mpills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.mp{font-family:var(--mono);font-size:9px;padding:5px 12px;border:1px solid var(--bd);color:var(--tdim);cursor:pointer;transition:all .15s;background:var(--s2);user-select:none}
+.mp:hover{border-color:var(--bd2);color:var(--txt)}
+.mp.on{border-color:var(--gold);color:var(--gold);background:rgba(232,184,75,.06)}
+.scat{font-family:var(--mono);font-size:7.5px;color:var(--tmut);letter-spacing:2px;text-transform:uppercase;margin:10px 0 5px}
+.spills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.sp{font-family:var(--mono);font-size:9px;padding:4px 10px;border:1px solid var(--bd);color:var(--tdim);cursor:pointer;transition:all .15s;background:var(--s2);user-select:none}
+.sp:hover{border-color:var(--bd2);color:var(--txt)}
+.sp.on{border-color:var(--gold);color:var(--gold);background:rgba(232,184,75,.05)}
+.btn-run{width:100%;background:var(--gold);color:#06060e;border:none;font-family:var(--sans);font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:13px;cursor:pointer;transition:all .2s;margin-top:10px}
+.btn-run:hover:not(:disabled){background:var(--gold2)}
+.btn-run:disabled{opacity:.35;cursor:not-allowed}
+.shells{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:14px}
+.shell{background:var(--s1);border:1px solid var(--bd);padding:9px 6px;text-align:center;transition:all .35s}
+.shell.active{border-color:var(--gold);background:rgba(232,184,75,.04)}
+.shell.done{border-color:var(--green);background:rgba(58,170,90,.04)}
+.shn{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tmut);transition:color .35s;margin-bottom:2px}
+.shell.active .shn{color:var(--gold)}.shell.done .shn{color:var(--green)}
+.shl{font-family:var(--mono);font-size:7px;color:var(--tmut);text-transform:uppercase;line-height:1.4;white-space:pre;transition:color .35s}
+.shell.active .shl{color:var(--gdim)}.shell.done .shl{color:var(--green)}
+.canvas{background:#04040c;border:1px solid var(--bd);position:relative;margin-bottom:14px}
+.clbl{position:absolute;top:8px;left:12px;font-family:var(--mono);font-size:7px;color:#0e0e20;letter-spacing:3px;text-transform:uppercase;pointer-events:none}
+.ctag{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:7px;color:#12122a}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.leg{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:7.5px;color:var(--tdim)}
+.legdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.nc{border:1px solid var(--bd);padding:10px 13px;margin-bottom:7px}
+.nc.FACT{border-left:3px solid #3a7fd4}.nc.ASSUMPTION{border-left:3px solid #e07830}
+.nc.CONSEQUENCE{border-left:3px solid #d04545}.nc.TRIGGER{border-left:3px solid #e8b84b}
+.nc.ACTOR{border-left:3px solid #8860d4}.nc.CONSTRAINT{border-left:3px solid #28a888}
+.nc.QUESTION{border-left:3px solid #6060a0}.nc.INSIGHT{border-left:3px solid #3aaa5a}
+.nm{display:flex;gap:5px;margin-bottom:5px;flex-wrap:wrap;align-items:center}
+.tag{font-family:var(--mono);font-size:7.5px;letter-spacing:.6px;text-transform:uppercase;padding:2px 5px;border:1px solid;flex-shrink:0}
+.ntext{font-family:var(--mono);font-size:9.5px;line-height:1.6;margin-bottom:7px}
+.cbar{display:flex;align-items:center;gap:7px}
+.cbw{flex:1;height:3px;background:var(--bd)}.cbf{height:100%;transition:width .9s}
+.cpct{font-family:var(--mono);font-size:8px;width:30px;text-align:right;flex-shrink:0}
+.shdr{font-family:var(--mono);font-size:7.5px;color:var(--tdim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--bd);margin-top:14px}
+.finding{border:1px solid var(--bd);padding:12px 14px;margin-bottom:9px}
+.fl{font-family:var(--mono);font-size:7.5px;letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.ft{font-family:var(--mono);font-size:9.5px;line-height:1.7}
+.wave-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.wd{font-family:var(--mono);font-size:7.5px;color:var(--tmut);width:40px;flex-shrink:0}
+.wdom{font-family:var(--mono);font-size:7.5px;width:110px;flex-shrink:0;white-space:nowrap;overflow:hidden}
+.wb{flex:1;height:3px;background:var(--bd)}.wf{height:100%}
+.wp{font-family:var(--mono);font-size:8px;width:30px;text-align:right;flex-shrink:0}
+.ibox{border:1px solid var(--gdim);padding:20px;background:rgba(232,184,75,.02)}
+.ilbl{font-family:var(--mono);font-size:7.5px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px}
+.imod{font-family:var(--mono);font-size:7.5px;color:var(--tdim);margin-bottom:12px}
+.itxt{font-size:13px;line-height:2;white-space:pre-wrap;color:var(--txt)}
+.ifoot{margin-top:12px;font-family:var(--mono);font-size:7.5px;color:var(--tmut);text-align:right}
+.log{font-family:var(--mono);font-size:8.5px;color:var(--tmut);line-height:2;max-height:130px;overflow-y:auto}
+.lok{color:var(--green)}.lerr{color:var(--red)}.lgold{color:var(--gold)}.lpurp{color:var(--purple)}
+/* Question phase */
+.q-banner{padding:12px 16px;background:rgba(232,184,75,.06);border:1px solid var(--gdim);margin-bottom:12px;font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:1px}
+.q-card{border:1px solid var(--bd);padding:14px 16px;margin-bottom:10px;background:var(--s2);transition:border-color .2s}
+.q-card:focus-within{border-color:var(--gdim)}
+.q-num{font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase}
+.q-text{font-size:13px;color:var(--txt);line-height:1.6;margin-bottom:10px;font-weight:500}
+.q-input{background:var(--bg);border:1px solid var(--bd);color:var(--txt);font-family:var(--sans);font-size:12px;padding:9px 12px;width:100%;outline:none;resize:vertical;min-height:60px;line-height:1.6;transition:border-color .2s}
+.q-input:focus{border-color:var(--gold)}
+/* Hidden node */
+.hn-wrap{border:1px solid var(--gold);padding:22px;background:rgba(232,184,75,.04);position:relative;overflow:hidden;margin-top:14px}
+.hn-wrap::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--gold)}
+.hn-label{font-family:var(--mono);font-size:8px;color:var(--gold);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px}
+.hn-text{font-size:14px;color:var(--txt);line-height:2;font-style:italic}
+.hn-sub{font-family:var(--mono);font-size:9px;color:var(--tdim);margin-top:12px;line-height:1.7}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  .g3{grid-template-columns:1fr}
+  .shl{font-size:6px}
+  .shn{font-size:11px}
+  .shells{gap:3px}
+  .logo{font-size:18px}
+  .logo-s{display:none}
+}
+.spin{display:inline-block;width:9px;height:9px;border:2px solid var(--bd);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-right:5px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="hdr">
+  <div style="display:flex;align-items:baseline;gap:10px">
+    <span class="logo">GOT</span>
+    <span class="logo-s">Graph of Thought &nbsp;·&nbsp; Universal Reasoning</span>
+  </div>
+  <span class="badge">ANY MODEL &nbsp;·&nbsp; ANY DOMAIN &nbsp;·&nbsp; ANY SCALE</span>
+</div>
+<div class="wrap">
+  <div style="margin-bottom:14px">
+    <div style="font-family:var(--mono);font-size:7.5px;color:var(--tdim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px">SELECT YOUR AI MODEL</div>
+    <div class="mpills" id="mpills"></div>
+    <div id="cors-notice" style="display:none;font-family:var(--mono);font-size:8px;color:var(--amber);padding:8px 12px;border:1px solid #6a3a08;background:rgba(224,120,48,.06);margin-top:6px;line-height:1.7">
+      ⚠&nbsp; Running from local file — only Claude and Ollama work directly.<br>
+      All models (Gemini, GPT, Groq, etc.) work on the hosted version:
+      <a href="https://got-engine.vercel.app" target="_blank" style="color:var(--gold)">got-engine.vercel.app</a>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><div class="pn">1</div><div class="pt" id="cfg-title">Configure</div></div>
+    <div class="pb">
+      <div class="g3" id="cfg-inputs"></div>
+      <div style="font-family:var(--mono);font-size:7.5px;color:var(--tdim);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px">SCENARIO</div>
+      <div id="scenario-pills"></div>
+      <div id="scenario-text-wrap" style="margin-top:8px"></div>
+      <div id="question-phase" style="display:none;margin-top:16px"></div>
+      <button class="btn-run" id="run-btn" onclick="startPhase()">▶&nbsp; Run Graph of Thought — Universal Mode</button>
+    </div>
+  </div>
+  <div class="shells" id="shells"></div>
+  <div class="canvas">
+    <div class="clbl">GOT &nbsp;·&nbsp; UNIVERSAL REASONING &nbsp;·&nbsp; MIND MAP</div>
+    <div class="ctag" id="ctag"></div>
+    <svg id="mm" viewBox="0 0 800 540" style="display:block;width:100%">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+          <path d="M2 1.5L8 5L2 8.5" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+      <text id="hint1" x="400" y="258" text-anchor="middle" fill="#111128" font-size="13" font-family="JetBrains Mono,monospace">Select a scenario and click Run</text>
+      <text id="hint2" x="400" y="280" text-anchor="middle" fill="#0d0d20" font-size="10" font-family="JetBrains Mono,monospace">The mind map builds across all domains simultaneously</text>
+      <g id="gl"></g><g id="gs"></g><g id="gn"></g>
+    </svg>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div id="log-panel" style="display:none" class="panel">
+    <div class="ph"><div class="pn">↓</div><div class="pt">Engine Log</div></div>
+    <div class="pb"><div class="log" id="logd"></div></div>
+  </div>
+  <div id="nodes-panel" style="display:none" class="panel">
+    <div class="ph"><div class="pn">2</div><div class="pt" id="nodes-title">Nodes</div></div>
+    <div class="pb" id="nodes-body"></div>
+  </div>
+  <div id="findings-panel" style="display:none" class="panel">
+    <div class="ph"><div class="pn">3</div><div class="pt" id="findings-title">Engine Findings</div></div>
+    <div class="pb" id="findings-body"></div>
+  </div>
+  <div id="insight-panel" style="display:none" class="panel">
+    <div class="ph"><div class="pn">4</div><div class="pt">GOT Universal Insight Report</div></div>
+    <div class="pb" id="insight-body"></div>
+  </div>
+  <div id="hidden-panel" style="display:none" class="panel">
+    <div class="ph"><div class="pn">✦</div><div class="pt">What you never said — but GOT saw</div></div>
+    <div class="pb" id="hidden-body"></div>
+  </div>
+</div>
+
+<script>
+var DC={FINANCIAL:'#e8b84b',TRADE:'#d4a030',ECONOMIC_MACRO:'#c89020',REVENUE:'#f0c060',SANCTIONS:'#e05010',HIRING:'#4a8fd4',PRODUCT:'#5aa0f0',SALES:'#3a7fc4',OPERATIONS:'#2a6fb4',STRATEGY:'#3a5fa4',GEOPOLITICAL:'#d04545',DIPLOMATIC:'#c03535',MILITARY:'#b02020',GOVERNANCE:'#e05555',JUDICIAL:'#f06565',ELECTORAL:'#d06060',POLICY:'#c05050',CULTURAL:'#a060d4',SOCIAL:'#8850c4',RELIGIOUS:'#9860c8',ETHNIC:'#b070d8',PSYCHOLOGICAL:'#7050b4',MEDIA:'#c080e0',COMMUNITY:'#9070c0',FAMILY:'#b090d0',HISTORICAL:'#8060b0',ENVIRONMENTAL:'#3aaa5a',CLIMATE:'#28b848',PUBLIC_HEALTH:'#48c868',ENERGY:'#58d878',MIGRATION:'#38a858',TECHNOLOGY:'#28c8d8',CYBER:'#18b8c8',AI_TECHNOLOGY:'#08a8b8',HEALTHCARE:'#48d8a8',LEGAL:'#68c890',UNKNOWN:'#505070'};
+function dc(d){return DC[d]||'#505070';}
+function cc(v){return v>=0.8?'#3aaa5a':v>=0.5?'#e07830':'#d04545';}
+function pct(v){return Math.round((v||0)*100);}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+var MODELS=[
+  {id:'anthropic',label:'Claude',col:'#e8845a',keyph:'sk-ant-api03-...',hint:'console.anthropic.com',keyLabel:'API Key',type:'anthropic',models:['claude-3-5-sonnet-latest','claude-3-5-haiku-latest','claude-3-opus-20240229'],def:'claude-3-5-sonnet-latest'},
+  {id:'openai',label:'GPT / o-series',col:'#74aa9c',keyph:'sk-proj-...',hint:'platform.openai.com',keyLabel:'API Key',type:'openai',models:['gpt-4o','gpt-4o-mini','o1-preview'],def:'gpt-4o'},
+  {id:'gemini',label:'Gemini',col:'#4285f4',keyph:'AIza...',hint:'aistudio.google.com',keyLabel:'API Key',type:'gemini',models:['gemini-2.0-flash','gemini-2.0-flash-lite-preview','gemini-1.5-pro','gemini-1.5-flash'],def:'gemini-2.0-flash'},
+  {id:'groq',label:'Groq (free)',col:'#f55036',keyph:'gsk_...',hint:'Free · console.groq.com',keyLabel:'API Key',type:'compat',base:'https://api.groq.com/openai/v1',models:['llama-3.3-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768'],def:'llama-3.3-70b-versatile'},
+  {id:'mistral',label:'Mistral',col:'#ff7000',keyph:'...',hint:'console.mistral.ai',keyLabel:'API Key',type:'compat',base:'https://api.mistral.ai/v1',models:['mistral-large-latest','mistral-medium-latest'],def:'mistral-large-latest'},
+  {id:'deepseek',label:'DeepSeek',col:'#4d9de0',keyph:'sk-...',hint:'platform.deepseek.com',keyLabel:'API Key',type:'compat',base:'https://api.deepseek.com/v1',models:['deepseek-chat','deepseek-reasoner'],def:'deepseek-chat'},
+  {id:'qwen',label:'Qwen',col:'#a066d4',keyph:'sk-...',hint:'bailian.console.aliyun.com',keyLabel:'API Key',type:'compat',base:'https://dashscope.aliyuncs.com/compatible-mode/v1',models:['qwen-plus','qwen-turbo','qwen-max'],def:'qwen-plus'},
+  {id:'ollama',label:'Ollama (local)',col:'#3aaa5a',keyph:'http://localhost:11434',hint:'No key needed · ollama.ai',keyLabel:'Host (optional)',type:'ollama',models:['llama3.3','llama3.1','mistral','gemma3','phi4','deepseek-r1'],def:'llama3.3'},
+  {id:'custom',label:'Custom API',col:'#808080',keyph:'your-api-key',hint:'Any OpenAI-compatible API',keyLabel:'API Key',type:'compat',base:'',models:[],def:''}
+];
+
+var CATS={
+  'Geopolitical & Military':[
+    {id:'sanctions',name:'Sanctions crisis',text:'A major power announces sweeping sanctions against a rising economy over territorial disputes. The target nation controls rare earth minerals critical to global tech supply chains. Three allies have deep trade ties with the target. Diplomatic channels have gone silent. Both sides have made public commitments that make backing down politically catastrophic.'},
+    {id:'conflict',name:'Regional conflict',text:'A frozen conflict dormant for eight years has reignited after a border incident each side blames on the other. Three neighbours have mutual defence treaties with one side. An international peacekeeping force is present but under-resourced. Both economies depend on a shared river system. A large ethnic minority straddles the contested border.'},
+    {id:'election',name:'Election interference',text:'A major democracy is three months from a national election. Intelligence services detected coordinated foreign interference through social media. The ruling party knows but has not disclosed it. The opposition is leading in polls but interference targets turnout in specific regions. The judiciary has been recently packed with loyalist appointments.'}
+  ],
+  'Climate & Environment':[
+    {id:'climate',name:'Climate policy reversal',text:'A new government reversed landmark climate commitments, withdrawing from international agreements and reopening fossil fuel extraction in protected zones. The country is the third largest emitter. Fourteen island nations face existential flooding. Major corporations made irreversible green investments under the old policy. The reversal was not in the election manifesto.'},
+    {id:'disaster',name:'Natural disaster cascade',text:'A 7.8 earthquake struck a densely populated coastal city in a developing nation. The city hosts the country primary port handling 40 percent of national trade. Three hospitals collapsed. The government is politically fragile. Two aid organisations are present from a prior drought. The country is servicing an IMF loan with strict austerity conditions.'}
+  ],
+  'Social & Cultural':[
+    {id:'movement',name:'Social movement',text:'A viral video sparked a nationwide protest movement in a country with no major civil unrest in 20 years. The movement started in urban youth but spread across generations. The government was dismissive initially. Two opposition parties are trying to co-opt it. It has no central leadership and operates through decentralised social media. Youth unemployment has been high for five years.'},
+    {id:'migration',name:'Mass migration crisis',text:'Climate-driven crop failures across three consecutive seasons triggered the largest migration wave in 50 years. The receiving country has a nationalist coalition government. The arriving population is predominantly from a religious minority. International refugee law mandates acceptance but enforcement is weak. Border infrastructure is overwhelmed.'}
+  ],
+  'Technology & Governance':[
+    {id:'ai_gov',name:'AI deployment without oversight',text:'A major AI lab deployed a system that outperforms all benchmarks in medical diagnosis and criminal sentencing but cannot be audited for bias. Regulators demand a pause. The company argues a pause cedes AI leadership to adversarial nations. Three governments gave informal approval. A whistleblower leaked evidence of suppressed safety testing showing systematic bias against specific demographic groups.'},
+    {id:'cyber',name:'Critical infrastructure attack',text:'A sophisticated cyberattack disabled power grids across a major industrial region, attributed to a state actor with plausible deniability. The attack struck during winter. Three hospitals are on backup generators. The attributed nation denies involvement. The intelligence community is divided on response. Retaliatory capabilities exist but their use would set dangerous new norms.'}
+  ],
+  'Business & Personal':[
+    {id:'pricing',name:'Pricing decision cascade',text:'A startup founder offered a 30 percent discount to close their first big enterprise client. The client accepted and the founder assumed it was a one-time exception. But the startup world is small and word travels. The next prospect opens negotiations asking for the same discount. The sales team is beginning to believe the product is not worth full price. A fundraising round is three months away.'},
+    {id:'resign',name:'Key person resignation',text:'A startup best engineer resigned without warning. The team assumes someone can cover the missing work. A key enterprise demo was committed in five weeks — the reference case for three warm prospects deep in the pipeline. The founder assumed Q3 revenue was safe. Two other engineers are watching carefully how this is handled.'},
+    {id:'personal',name:'Life-changing personal decision',text:'A 28-year-old professional has a job offer in a different country — higher pay, better title, strong career trajectory. But it means leaving aging parents who are beginning to need support, and a long-term partner who cannot relocate immediately. The company was acquired six months ago. The relocation offer expires in three weeks. Neither the parents nor the partner have clearly said what they want.'}
+  ]
+};
+
+var S={
+  modelId:'anthropic',apiKey:'',modelName:'claude-3-5-sonnet-latest',customBase:'',
+  scenarioId:null,customText:'',running:false,
+  shells:['idle','idle','idle','idle','idle'],
+  gd:null,pos:{},engR:null,insight:null,
+  phase:'input',questions:[],answers:{},hiddenNode:null
+};
+
+function getModel(){return MODELS.find(function(m){return m.id===S.modelId;})||MODELS[0];}
+
+// ── SYSTEM PROMPTS ──────────────────────────────────────────────────────────
+
+var QUESTION_SYS = 'Ask 4 probing questions about this situation. Questions should feel personal and slightly uncomfortable — they cut across hidden dimensions the person has not mentioned. Return ONLY valid JSON, no markdown: {"questions":[{"id":"q1","text":"the question","domain":"PSYCHOLOGICAL","reveals":"hidden truth"}]} Exactly 4 questions. No yes/no questions. Ask about relationships, identity, fears, what they are avoiding. Return ONLY the JSON object starting with { and ending with }.';
+
+var GRAPH_SYS = [
+  'Extract a causal reasoning graph. Return ONLY a valid JSON object.',
+  'No markdown. No explanation. Start with { and end with }.',
+  'Rules: 6 to 8 nodes. Content strings under 50 characters each.',
+  'node_type: FACT ASSUMPTION CONSEQUENCE TRIGGER ACTOR CONSTRAINT QUESTION INSIGHT',
+  'domain: FINANCIAL TRADE ECONOMIC_MACRO SANCTIONS HIRING PRODUCT SALES OPERATIONS STRATEGY GEOPOLITICAL DIPLOMATIC MILITARY GOVERNANCE ELECTORAL POLICY CULTURAL SOCIAL RELIGIOUS ETHNIC PSYCHOLOGICAL MEDIA COMMUNITY FAMILY HISTORICAL ENVIRONMENTAL CLIMATE PUBLIC_HEALTH ENERGY MIGRATION TECHNOLOGY CYBER AI_TECHNOLOGY HEALTHCARE LEGAL UNKNOWN',
+  'edge_type: CAUSAL_FORWARD ASSUMPTION_OF CONTRADICTION AMPLIFIES CONSTRAINS',
+  'confidence: number 0.05 to 0.95. never_verified: true or false.',
+  'Return exactly: {"graph_name":"short name","nodes":[{"id":"n1","content":"text","node_type":"FACT","domain":"DOMAIN","confidence":0.8,"never_verified":false}],"edges":[{"from":"n1","to":"n2","edge_type":"CAUSAL_FORWARD","weight":0.8,"label":"causes"}]}'
+].join(' ');
+
+var INSIGHT_SYS = 'You are a master strategist and deep-thinking philosopher explaining a complex situation to a highly intelligent partner. Write an expansive, detailed 300-400 word insight report in 4 profound paragraphs. Paragraph 1: Analyze the core assumption they are making that is dangerously flawed or incomplete. Paragraph 2: Detail three specific, non-obvious consequences and second-order effects that will derail the current path. Paragraph 3: Synthesize the geopolitical, economic, or psychological shifts required to navigate this. Paragraph 4: One clear, specific signal that will prove this analysis correct. Be direct, authoritative, and brilliantly insightful. Always finish every sentence completely.';
+
+var HIDDEN_SYS = 'You are a master of psychological subtext and structural patterns. Your task is to surface the ONE hidden truth that was never explicitly stated but drives the entire scenario. Write an expansive, 300-400 word psychological and structural analysis in 4 paragraphs. First paragraph: Reveal the specific hidden motive, fear, or belief system that is the real engine here (Start with: "What you have not said — but what is actually driving everything here — is..."). Second paragraph: Explain how this subtext distorts the facts provided. Third paragraph: Describe how this hidden variable changes the entire "cost of failure" for the actors involved. Fourth paragraph: A final, uncompromising synthesis. Be direct, compassionate, and honest. Always finish every sentence completely.';
+
+// ── API LAYER ────────────────────────────────────────────────────────────────
+function callModel(system, user, maxTokens) {
+  var m = getModel();
+  var key = S.apiKey.trim();
+  var mname = S.modelName || m.def;
+  maxTokens = maxTokens || 2000;
+
+  // Check if we are on Vercel (server proxy) or local file
+  var isServer = window.location.protocol === 'http:' || window.location.protocol === 'https:';
+  var isLocalFile = window.location.protocol === 'file:';
+
+  // LOCAL FILE: only Anthropic and Ollama work directly from browser (CORS)
+  if (isLocalFile) {
+    if (m.type === 'anthropic') {
+      return fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+        body:JSON.stringify({model:mname,max_tokens:maxTokens,system:system,messages:[{role:'user',content:user}]})
+      }).then(function(r){
+        if(!r.ok) return r.text().then(function(t){throw new Error('Claude '+r.status+': '+t);});
+        return r.json();
+      }).then(function(d){
+        var b=d.content||[];for(var i=0;i<b.length;i++){if(b[i].type==='text')return b[i].text;}return '';
+      });
+    }
+    if (m.type === 'gemini') {
+      var isJson = system.indexOf('Return ONLY') > -1;
+      var gcfg = isJson ? {maxOutputTokens:8192,temperature:0.1,response_mime_type:'application/json'} : {maxOutputTokens:4096,temperature:0.4};
+      return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+mname+':generateContent?key='+key, {
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({system_instruction:{parts:[{text:system}]},contents:[{parts:[{text:user}]}],generationConfig:gcfg})
+      }).then(function(r){
+        if(!r.ok) return r.text().then(function(t){throw new Error('Gemini '+r.status+': '+t);});
+        return r.json();
+      }).then(function(d){
+        try{return d.candidates[0].content.parts[0].text;}
+        catch(e){throw new Error('Gemini returned no text. Check your API key.');}
+      });
+    }
+    if (m.type === 'ollama') {
+      var host = key || 'http://localhost:11434';
+      return fetch(host+'/api/chat', {
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:mname,stream:false,options:{num_predict:maxTokens},messages:[{role:'system',content:system},{role:'user',content:user}]})
+      }).then(function(r){if(!r.ok)throw new Error('Ollama '+r.status);return r.json();})
+       .then(function(d){return d.message&&d.message.content||'';});
+    }
+    throw new Error(m.label+' cannot be called directly from a local file due to browser security (CORS). Please use the hosted version at got-engine.vercel.app or switch to Claude.');
+  }
+
+  // HOSTED ON VERCEL: all models route through server proxy — CORS is solved
+  var base = (m.id==='custom') ? (S.customBase||'') : (m.base||'');
+  return fetch('/api/model', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      provider: m.type,
+      apiKey: key,
+      modelName: mname,
+      system: system,
+      user: user,
+      maxTokens: maxTokens,
+      baseUrl: base
+    })
+  }).then(function(r){
+    if(!r.ok) return r.text().then(function(t){throw new Error('Server error '+r.status+': '+t);});
+    return r.json();
+  }).then(function(d){
+    if(d.error) throw new Error(d.error);
+    return d.text || '';
+  });
+}
+
+function callJSON(system, user) {
+  return callModel(system, user, 4000).then(function(raw) {
+    var c = raw.trim().replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'').trim();
+    var os=c.indexOf('{'), oe=c.lastIndexOf('}');
+    if(os>-1&&oe>os) c=c.slice(os,oe+1);
+    try{return JSON.parse(c);}
+    catch(e){
+      try{return JSON.parse(repairJSON(c));}
+      catch(e2){throw new Error('Model returned malformed JSON. Try a different model or simpler scenario.');}
+    }
+  });
+}
+
+function repairJSON(s){var r=s.trim();r=r.replace(/(:\s*\d+\.)(\s*[,}\]\n])/g,'$10$2');r=r.replace(/,(\s*[}\]])/g,'$1');r=r.replace(/,\s*"[^"]*"\s*:\s*$/,'');r=r.replace(/,\s*"[^"]*"\s*$/,'');var op=(r.match(/[{[]/g)||[]).length,cl=(r.match(/[}\]]/g)||[]).length;for(var i=0;i<op-cl;i++){var last='';for(var j=r.length-1;j>=0;j--){if(r[j]==='{'){last='{';break;}if(r[j]==='['){last='[';break;}}r+=(last==='{')?'}':']';}return r;}
+
+// ── ENGINE LOGIC ─────────────────────────────────────────────────────────────
+function runEngines(nodes, edges) {
+  var nm={};nodes.forEach(function(n){nm[n.id]=n;});
+  var fwd=edges.filter(function(e){return e.edge_type==='CAUSAL_FORWARD';});
+  var triggers=nodes.filter(function(n){
+    return ['FACT','TRIGGER','ACTOR'].indexOf(n.node_type)>-1&&n.confidence>=0.65&&!fwd.some(function(e){return e.to===n.id;});
+  });
+  if(!triggers.length&&nodes.length) triggers=[nodes[0]];
+  var allWaves=[],nodeWaveCount={};
+  triggers.forEach(function(root,wi){
+    var wave=[],vis={},queue=[[root.id,1.0,0]],best={};best[root.id]=1.0;
+    while(queue.length){
+      var item=queue.shift(),nid=item[0],sig=item[1],d=item[2];
+      if(vis[nid])continue;vis[nid]=true;if(sig<0.01)continue;
+      wave.push({id:nid,signal:sig,depth:d,waveDomain:root.domain});
+      nodeWaveCount[nid]=(nodeWaveCount[nid]||0)+1;
+      fwd.filter(function(e){return e.from===nid;}).forEach(function(e){
+        if(!vis[e.to]){var out=sig*e.weight*0.92;if(out>=(best[e.to]||0)){best[e.to]=out;queue.push([e.to,out,d+1]);}}
+      });
+    }
+    allWaves.push({waveId:wi,domain:root.domain,startId:root.id,startContent:root.content,hops:wave});
+  });
+  var seenF={},flatWave=[];
+  allWaves.forEach(function(w){w.hops.forEach(function(h){if(!seenF[h.id]){seenF[h.id]=true;flatWave.push(h);}});});
+  var bwd=edges.filter(function(e){return e.edge_type==='CAUSAL_BACKWARD';});
+  var consequences=nodes.filter(function(n){return n.node_type==='CONSEQUENCE'&&!fwd.some(function(e){return e.from===n.id;});});
+  var ts=consequences.length?consequences[consequences.length-1]:nodes[nodes.length-1];
+  var trace=[],tvis={},tqueue=ts?[[ts.id,0]]:[];
+  while(tqueue.length){
+    var ti=tqueue.shift(),tnid=ti[0],td=ti[1];
+    if(!tnid||tvis[tnid])continue;tvis[tnid]=true;
+    var tn=nm[tnid];trace.push({id:tnid,content:tn?tn.content:'',depth:td,domain:tn?tn.domain:''});
+    bwd.filter(function(e){return e.from===tnid;}).forEach(function(e){if(!tvis[e.to])tqueue.push([e.to,td+1]);});
+  }
+  var rootCauses=trace.filter(function(t,i){return i>0&&!bwd.some(function(e){return e.from===t.id;});}).map(function(t){return nm[t.id]||{};});
+  var assumptions=nodes.filter(function(n){return n.node_type==='ASSUMPTION';}).map(function(n){
+    var dc2=edges.filter(function(e){return e.from===n.id&&e.edge_type==='ASSUMPTION_OF';}).length;
+    var f=Math.min((1-n.confidence)*0.5+Math.min(dc2/5,1)*0.35+(n.never_verified?0.15:0),1);
+    return{node:n,fragility:f,risk:f>=0.7?'CRITICAL':f>=0.5?'HIGH':f>=0.3?'MEDIUM':'LOW'};
+  }).sort(function(a,b){return b.fragility-a.fragility;});
+  var rseen={},resonances=[];
+  nodes.forEach(function(na){nodes.forEach(function(nb){
+    if(na.id>=nb.id||na.domain===nb.domain)return;
+    var k=[na.id,nb.id].sort().join('|');if(rseen[k])return;rseen[k]=true;
+    var sc=0;
+    if(na.node_type===nb.node_type)sc+=0.35;
+    if((na.confidence>=0.7)===(nb.confidence>=0.7))sc+=0.15;
+    if(!fwd.some(function(e){return e.to===na.id;})===!fwd.some(function(e){return e.to===nb.id;}))sc+=0.20;
+    if(sc>=0.45)resonances.push({nodeA:na,nodeB:nb,score:sc,strength:sc>=0.75?'STRONG':'MODERATE'});
+  });});
+  resonances.sort(function(a,b){return b.score-a.score;});
+  var intersections=Object.keys(nodeWaveCount).filter(function(id){return nodeWaveCount[id]>1;});
+  return{allWaves:allWaves,flatWave:flatWave,trace:trace,rootCauses:rootCauses,assumptions:assumptions,resonances:resonances,intersections:intersections,triggers:triggers};
+}
+
+// ── SVG ───────────────────────────────────────────────────────────────────────
+function layout(nodes,edges){
+  var CX=400,CY=270,RINGS=[0,120,215,300,375,440];
+  var fwd=edges.filter(function(e){return e.edge_type==='CAUSAL_FORWARD';});
+  var hasIn={};fwd.forEach(function(e){hasIn[e.to]=true;});
+  var lv={},queue=[];
+  nodes.forEach(function(n){if(!hasIn[n.id]){lv[n.id]=0;queue.push(n.id);}});
+  if(!queue.length&&nodes.length){lv[nodes[0].id]=0;queue.push(nodes[0].id);}
+  while(queue.length){var nid=queue.shift();fwd.filter(function(e){return e.from===nid;}).forEach(function(e){if(!(e.to in lv)){lv[e.to]=(lv[nid]||0)+1;queue.push(e.to);}});}
+  nodes.forEach(function(n){if(!(n.id in lv))lv[n.id]=Math.floor(Math.random()*3)+1;});
+  var byL={};nodes.forEach(function(n){var l=lv[n.id];if(!byL[l])byL[l]=[];byL[l].push(n.id);});
+  var pos={};
+  Object.keys(byL).forEach(function(l){
+    var lv2=parseInt(l),ids=byL[l];
+    var r=lv2<RINGS.length?RINGS[lv2]:RINGS[RINGS.length-1]+(lv2-RINGS.length+1)*55;
+    ids.forEach(function(id,i){
+      var a=lv2===0?0:-Math.PI/2+2*Math.PI*i/ids.length;
+      pos[id]=r===0?{x:CX,y:CY}:{x:CX+r*Math.cos(a),y:CY+r*Math.sin(a)};
+    });
+  });
+  return pos;
+}
+
+function drawSVG(nodes,edges,pos){
+  var gl=document.getElementById('gl'),gn=document.getElementById('gn');
+  gl.innerHTML='';gn.innerHTML='';
+  document.getElementById('hint1').setAttribute('opacity','0');
+  document.getElementById('hint2').setAttribute('opacity','0');
+  edges.filter(function(e){return e.edge_type!=='CAUSAL_BACKWARD';}).forEach(function(e,i){
+    var a=pos[e.from],b=pos[e.to];if(!a||!b)return;
+    var sn=nodes.find(function(n){return n.id===e.from;});
+    var col=sn?dc(sn.domain):'#2a2a45';
+    var mx=(a.x+b.x)/2,my=(a.y+b.y)/2,dx=b.x-a.x,dy=b.y-a.y,len=Math.sqrt(dx*dx+dy*dy)||1;
+    var cx=mx-dy/len*16,cy=my+dx/len*16;
+    var path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d','M'+a.x+','+a.y+' Q'+cx+','+cy+' '+b.x+','+b.y);
+    path.setAttribute('fill','none');path.setAttribute('stroke',col);
+    path.setAttribute('stroke-width','0.75');path.setAttribute('opacity','0.45');
+    if(e.edge_type==='CAUSAL_FORWARD')path.setAttribute('marker-end','url(#arr)');
+    if(e.edge_type==='ASSUMPTION_OF'){path.setAttribute('stroke-dasharray','2 3');}
+    if(e.edge_type==='RESONANCE'){path.setAttribute('stroke-dasharray','3 4');path.setAttribute('opacity','0.3');}
+    var pl=400;path.style.strokeDasharray=pl;path.style.strokeDashoffset=pl;
+    (function(p){setTimeout(function(){p.style.transition='stroke-dashoffset 0.55s ease';p.style.strokeDashoffset=0;},200+i*35);})(path);
+    gl.appendChild(path);
+  });
+  nodes.forEach(function(n,idx){
+    var p=pos[n.id];if(!p)return;
+    var col=dc(n.domain),conf=pct(n.confidence);
+    var circ=2*Math.PI*28,arc=(conf/100)*circ;
+    var sym={'FACT':'F','ASSUMPTION':'A','CONSEQUENCE':'C','TRIGGER':'T','ACTOR':'P','CONSTRAINT':'X','QUESTION':'?','INSIGHT':'★'}[n.node_type]||'.';
+    var short=n.content.length>20?n.content.slice(0,18)+'...':n.content;
+    var g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.id='nd-'+n.id;g.setAttribute('transform','translate('+p.x+','+p.y+')');g.setAttribute('opacity','0');
+    var nv=n.never_verified?('<circle cx="17" cy="-17" r="4" fill="#2a1000" stroke="'+dc('ASSUMPTION')+'" stroke-width="0.75"/><text x="17" y="-16" text-anchor="middle" dominant-baseline="central" fill="'+dc('ASSUMPTION')+'" font-family="JetBrains Mono,monospace" font-size="6" font-weight="700">!</text>'):'';
+    g.innerHTML='<circle r="32" fill="none" stroke="'+col+'" stroke-width="1.5" stroke-dasharray="'+arc.toFixed(1)+' '+circ.toFixed(1)+'" stroke-dashoffset="'+(circ*.25).toFixed(1)+'" opacity="0.5"/><circle r="18" fill="#04040c" stroke="'+col+'" stroke-width="0.75"/><text x="0" y="-3" text-anchor="middle" dominant-baseline="central" fill="'+col+'" font-family="JetBrains Mono,monospace" font-size="8" font-weight="700">'+sym+'</text><text x="0" y="7.5" text-anchor="middle" dominant-baseline="central" fill="'+col+'" font-family="JetBrains Mono,monospace" font-size="6.5" opacity="0.8">'+conf+'%</text><text y="26" text-anchor="middle" dominant-baseline="hanging" fill="#5050a0" font-family="DM Sans,sans-serif" font-size="7">'+short+'</text>'+nv;
+    (function(el){setTimeout(function(){el.style.transition='opacity 0.3s ease';el.setAttribute('opacity','1');},250+idx*80);})(g);
+    gn.appendChild(g);
+  });
+}
+
+function updateNode(id,state){
+  var g=document.getElementById('nd-'+id);if(!g)return;
+  var ring=g.querySelector('circle');if(!ring)return;
+  var col=state==='ACTIVE'?'#e8b84b':state==='FLAGGED'?'#d04545':state==='STABILIZED'?'#3aaa5a':'#252545';
+  ring.setAttribute('stroke',col);
+  if(state==='ACTIVE')ring.setAttribute('opacity','0.9');
+}
+
+function fireSignal(fid,tid,col){
+  var paths=[].slice.call(document.querySelectorAll('#gl path'));
+  var pa=S.pos[fid],pb=S.pos[tid];if(!pa||!pb)return;
+  var match=null;
+  for(var i=0;i<paths.length;i++){var d=paths[i].getAttribute('d')||'';if(d.indexOf('M'+Math.round(pa.x)+','+Math.round(pa.y))===0||d.indexOf('M'+pa.x.toFixed(1)+','+pa.y.toFixed(1))===0){match=paths[i];break;}}
+  if(!match)return;
+  var gs=document.getElementById('gs');if(!gs)return;
+  var dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('r','3.5');dot.setAttribute('fill',col);dot.setAttribute('opacity','0');gs.appendChild(dot);
+  var pl;try{pl=match.getTotalLength();}catch(e){dot.remove();return;}
+  var s=null,dur=650;
+  function step(ts){if(!s)s=ts;var p=Math.min((ts-s)/dur,1);var ev=1-Math.pow(1-p,3);var pt=match.getPointAtLength(ev*pl);dot.setAttribute('cx',pt.x);dot.setAttribute('cy',pt.y);dot.setAttribute('opacity',p<0.15?p/0.15:p>0.85?(1-p)/0.15:1);if(p<1)requestAnimationFrame(step);else dot.remove();}
+  requestAnimationFrame(step);
+}
+
+// ── LOGGING ───────────────────────────────────────────────────────────────────
+function addLog(msg,cls){
+  var p=document.getElementById('log-panel'),d=document.getElementById('logd');
+  if(!p||!d)return;p.style.display='';
+  var line=document.createElement('div');if(cls)line.className=cls;line.textContent=msg;d.appendChild(line);d.scrollTop=d.scrollHeight;
+}
+function setShell(idx,state){S.shells[idx]=state;renderShells();}
+
+// ── QUESTION PHASE ───────────────────────────────────────────────────────────
+function getScenarioText(){
+  if(S.scenarioId){
+    var all=[];Object.keys(CATS).forEach(function(k){CATS[k].forEach(function(s){all.push(s);});});
+    var sc=all.find(function(s){return s.id===S.scenarioId;});return sc?sc.text:'';
+  }else{var ct=document.getElementById('custom-text');return ct?ct.value.trim():'';}
+}
+
+function startPhase(){
+  var text=getScenarioText();
+  if(!text){alert('Select or enter a scenario first.');return;}
+  var m=getModel();
+  var key=document.getElementById('key-input')?document.getElementById('key-input').value.trim():'';
+  var mname=document.getElementById('model-select')?document.getElementById('model-select').value:m.def;
+  S.apiKey=key;S.modelName=mname;
+  if(m.id==='custom'){var cb=document.getElementById('custom-base');if(cb)S.customBase=cb.value.trim();}
+  if(m.type!=='ollama'&&!key){alert('Enter your '+m.label+' API key.');return;}
+  if(key){try{localStorage.setItem('got_key_'+m.id,key);}catch(e){}}
+  var rb=document.getElementById('run-btn');
+  if(rb){rb.disabled=true;rb.innerHTML='<span class="spin"></span>GOT is reading your situation...';}
+  callJSON(QUESTION_SYS,text).then(function(data){
+    S.questions=data.questions||[];S.answers={};S.phase='questions';
+    if(S.questions.length){
+      renderQuestionPhase();
+      if(rb)rb.style.display='none';
+    }else{
+      if(rb){rb.disabled=false;rb.innerHTML='▶&nbsp; Run Graph of Thought — Universal Mode';}
+      runGOT();
+    }
+  }).catch(function(err){
+    console.log('Questions skipped, running direct analysis:',err.message);
+    S.questions=[];S.answers={};
+    if(rb){rb.disabled=false;rb.innerHTML='▶&nbsp; Run Graph of Thought — Universal Mode';}
+    runGOT();
+  });
+}
+
+function renderQuestionPhase(){
+  var qp=document.getElementById('question-phase');if(!qp)return;
+  var html='<div class="q-banner">✦&nbsp; GOT has questions for you first — answer them to unlock deeper analysis</div>';
+  html+=S.questions.map(function(q,i){
+    return '<div class="q-card">'
+      +'<div class="q-num">Question '+(i+1)+' of '+S.questions.length+'&nbsp;&nbsp;·&nbsp;&nbsp;'+q.domain+'</div>'
+      +'<div class="q-text">'+q.text+'</div>'
+      +'<textarea class="q-input" id="ans-'+q.id+'" placeholder="Answer honestly — the more specific you are, the deeper GOT can go..." rows="3"></textarea>'
+      +'</div>';
+  }).join('');
+  html+='<button class="btn-run" onclick="submitAnswers()">▶&nbsp; I have answered — now run the full analysis</button>';
+  qp.innerHTML=html;qp.style.display='';
+  qp.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function submitAnswers(){
+  S.questions.forEach(function(q){var el=document.getElementById('ans-'+q.id);if(el)S.answers[q.id]=el.value;});
+  var qp=document.getElementById('question-phase');if(qp)qp.style.display='none';
+  runGOT();
+}
+
+// ── MAIN RUN ─────────────────────────────────────────────────────────────────
+function runGOT(){
+  var text=getScenarioText();if(!text)return;
+  var enriched=text;
+  if(S.questions.length&&Object.keys(S.answers).length){
+    enriched+='\n\nAdditional context from questions:\n';
+    S.questions.forEach(function(q){var a=S.answers[q.id];if(a&&a.trim())enriched+=q.text+' Answer: '+a.trim()+'\n';});
+  }
+  S.running=true;S.gd=null;S.engR=null;S.insight=null;S.pos={};
+  S.shells=['idle','idle','idle','idle','idle'];
+  var rb=document.getElementById('run-btn');
+  if(rb){rb.disabled=true;rb.innerHTML='<span class="spin"></span>Reasoning across all domains...';}
+  ['log-panel','nodes-panel','findings-panel','insight-panel','hidden-panel'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='none';});
+  var ld=document.getElementById('logd');if(ld)ld.innerHTML='';
+  renderShells();
+  addLog(getModel().label+' · '+S.modelName,'lpurp');
+  addLog('Extracting universal reasoning graph...','lgold');
+  callJSON(GRAPH_SYS,enriched).then(function(raw){
+    S.gd=raw;
+    var bw=(raw.edges||[]).filter(function(e){return e.edge_type==='CAUSAL_FORWARD';}).map(function(e){return{from:e.to,to:e.from,edge_type:'CAUSAL_BACKWARD',weight:e.weight};});
+    S.gd.edges=[].concat(raw.edges||[]).concat(bw);
+    var domains=[];S.gd.nodes.forEach(function(n){if(domains.indexOf(n.domain)<0)domains.push(n.domain);});
+    addLog('Graph: '+S.gd.nodes.length+' nodes across '+domains.length+' domains — '+domains.slice(0,4).join(', ')+(domains.length>4?'...':''),'lok');
+    var pos=layout(S.gd.nodes,S.gd.edges);S.pos=pos;
+    setTimeout(function(){drawSVG(S.gd.nodes,S.gd.edges,pos);},80);
+    var leg=document.getElementById('legend');if(leg)leg.innerHTML=domains.map(function(d){return '<div class="leg"><div class="legdot" style="background:'+dc(d)+'"></div>'+d.replace(/_/g,' ')+'</div>';}).join('');
+    var ct=document.getElementById('ctag');if(ct)ct.textContent=getModel().label+' · '+S.gd.nodes.length+' nodes · '+domains.length+' domains';
+    renderNodes();
+    return sleep(700);
+  }).then(function(){
+    setShell(0,'active');addLog('Layer 1 — Node Engine: registering all reasoning units...');return sleep(450);
+  }).then(function(){
+    setShell(0,'done');addLog('Layer 1 done: '+S.gd.nodes.length+' nodes','lok');
+    var eng=runEngines(S.gd.nodes,S.gd.edges);S.engR=eng;
+    setShell(1,'active');addLog('Layer 2 — Propagation: '+eng.triggers.length+' simultaneous waves...');
+    var steps=eng.flatWave.slice(0,40),i=0;
+    function nextWave(){
+      if(i>=steps.length)return Promise.resolve();
+      var w=steps[i++];updateNode(w.id,'ACTIVE');
+      S.gd.edges.filter(function(e){return e.to===w.id&&e.edge_type==='CAUSAL_FORWARD';}).forEach(function(e){var sn=S.gd.nodes.find(function(n){return n.id===e.from;});fireSignal(e.from,e.to,sn?dc(sn.domain):'#3a7fd4');});
+      return sleep(110).then(nextWave);
+    }
+    return nextWave();
+  }).then(function(){
+    setShell(1,'done');addLog('Layer 2 done: '+S.engR.flatWave.length+' activations · '+S.engR.intersections.length+' intersections','lok');
+    setShell(2,'active');addLog('Layer 3 — Bidirectional Causality: tracing root causes...');
+    var steps=S.engR.trace.slice(0,20),i=0;
+    function nextTrace(){
+      if(i>=steps.length)return Promise.resolve();
+      var t=steps[i++];updateNode(t.id,'ACTIVE');
+      S.gd.edges.filter(function(e){return e.from===t.id&&e.edge_type==='CAUSAL_BACKWARD';}).forEach(function(e){fireSignal(e.from,e.to,'#e8b84b');});
+      return sleep(120).then(nextTrace);
+    }
+    return nextTrace();
+  }).then(function(){
+    setShell(2,'done');addLog('Layer 3 done: '+S.engR.rootCauses.length+' root cause(s)','lok');
+    setShell(3,'active');addLog('Layer 4 — Assumption Surface: multi-context validation...');return sleep(500);
+  }).then(function(){
+    S.engR.assumptions.filter(function(a){return a.fragility>=0.5;}).forEach(function(a){updateNode(a.node.id,'FLAGGED');});
+    setShell(3,'done');addLog('Layer 4 done: '+S.engR.assumptions.length+' assumptions, '+S.engR.assumptions.filter(function(a){return a.fragility>=0.5;}).length+' flagged','lok');
+    setShell(4,'active');addLog('Layer 5 — Cross-Domain Resonance: scanning all domain pairs...');
+    var res=S.engR.resonances.slice(0,6),i=0;
+    function nextRes(){if(i>=res.length)return Promise.resolve();var r=res[i++];fireSignal(r.nodeA.id,r.nodeB.id,'#28a888');return sleep(170).then(nextRes);}
+    return nextRes();
+  }).then(function(){
+    return sleep(400);
+  }).then(function(){
+    setShell(4,'done');addLog('Layer 5 done: '+S.engR.resonances.length+' cross-domain connections','lok');
+    S.gd.nodes.forEach(function(n){if(!S.engR.assumptions.some(function(a){return a.node.id===n.id&&a.fragility>=0.5;}))updateNode(n.id,'STABILIZED');});
+    renderFindings();addLog('Synthesising insight report...','lgold');
+    var payload={scenario:S.gd.graph_name,domains:[],root_causes:S.engR.rootCauses.map(function(r){return r.content;}),most_fragile:S.engR.assumptions[0]&&S.engR.assumptions[0].node.content,fragility_pct:pct(S.engR.assumptions[0]&&S.engR.assumptions[0].fragility||0)+'%',never_verified:S.engR.assumptions[0]&&S.engR.assumptions[0].node.never_verified,resonances:S.engR.resonances.length,intersections:S.engR.intersections.length};
+    S.gd.nodes.forEach(function(n){if(payload.domains.indexOf(n.domain)<0)payload.domains.push(n.domain);});
+    return callModel(INSIGHT_SYS,JSON.stringify(payload),2000);
+  }).then(function(insight){
+    S.insight=insight;addLog('Complete.','lok');renderInsight();
+    if(S.questions.length){
+      var ctx='Original situation:\n'+text+'\n\n';
+      ctx+='Questions and answers:\n';
+      S.questions.forEach(function(q){ctx+='Q: '+q.text+'\nA: '+(S.answers[q.id]||'[not answered]')+'\n\n';});
+      return callModel(HIDDEN_SYS,ctx,2000).then(function(hn){S.hiddenNode=hn;renderHiddenNode();}).catch(function(){});
+    }
+  }).catch(function(err){
+    addLog('Error: '+err.message,'lerr');
+    // Show error visibly on page too
+    var lp=document.getElementById('log-panel');if(lp)lp.style.display='';
+  }).then(function(){
+    S.running=false;
+    var rb=document.getElementById('run-btn');if(rb){rb.disabled=false;rb.innerHTML='▶&nbsp; Run Graph of Thought — Universal Mode';}
+  });
+}
+
+// ── RENDER HELPERS ───────────────────────────────────────────────────────────
+function renderShells(){
+  var labels=['L1','L2','L3','L4','L5'];
+  var names=['Node\nEngine','Multi-Wave\nPropagation','Bidirectional\nCausality','Multi-Context\nAssumption','Cross-Domain\nResonance'];
+  var el=document.getElementById('shells');if(!el)return;
+  el.innerHTML=S.shells.map(function(s,i){return '<div class="shell '+s+'"><div class="shn">'+labels[i]+'</div><div class="shl">'+names[i]+'</div></div>';}).join('');
+}
+
+function renderNodes(){
+  if(!S.gd)return;
+  var p=document.getElementById('nodes-panel'),b=document.getElementById('nodes-body'),t=document.getElementById('nodes-title');
+  if(!p||!b)return;p.style.display='';
+  if(t)t.textContent=S.gd.graph_name+' — '+S.gd.nodes.length+' nodes';
+  b.innerHTML=S.gd.nodes.map(function(n){
+    var c=pct(n.confidence),col=dc(n.domain);
+    return '<div class="nc '+n.node_type+'"><div class="nm"><span class="tag" style="color:'+col+';border-color:'+col+'44">'+n.node_type+'</span><span class="tag" style="color:'+col+';border-color:'+col+'33;font-size:7px">'+n.domain.replace(/_/g,' ')+'</span>'+(n.never_verified?'<span class="tag" style="color:var(--amber);border-color:#6a3a08">! not verified</span>':'')+'</div><div class="ntext">'+n.content+'</div><div class="cbar"><span style="font-family:var(--mono);font-size:7.5px;color:var(--tdim);width:52px;flex-shrink:0">Certainty</span><div class="cbw"><div class="cbf" style="width:'+c+'%;background:'+cc(n.confidence)+'"></div></div><span class="cpct" style="color:'+cc(n.confidence)+'">'+c+'%</span></div></div>';
+  }).join('');
+}
+
+function renderFindings(){
+  if(!S.engR||!S.gd)return;
+  var p=document.getElementById('findings-panel'),b=document.getElementById('findings-body'),t=document.getElementById('findings-title');
+  if(!p||!b)return;p.style.display='';
+  if(t)t.textContent='Engine Findings — '+S.engR.allWaves.length+' waves · '+S.engR.flatWave.length+' activations · '+S.engR.resonances.length+' resonances';
+  var html='';
+  if(S.engR.rootCauses.length)html+='<div class="finding" style="border-color:#1a4a28;background:rgba(58,170,90,.04)"><div class="fl" style="color:var(--green)">This is where it all started</div>'+S.engR.rootCauses.map(function(rc){return '<div class="ft">['+rc.domain+'] "'+rc.content+'"</div>';}).join('')+'</div>';
+  if(S.engR.intersections.length)html+='<div class="finding" style="border-color:#1a3a6a;background:rgba(58,127,212,.04)"><div class="fl" style="color:var(--blue)">'+S.engR.intersections.length+' places where everything is connected to everything</div><div class="ft">These are the pressure points. Touch one and multiple things change at once. This is where any action will have the most effect.</div></div>';
+  html+='<div class="shdr">MULTI-WAVE PROPAGATION — '+S.engR.allWaves.length+' simultaneous waves</div>';
+  S.engR.allWaves.forEach(function(w,wi){
+    html+='<div style="margin-bottom:12px"><div style="font-family:var(--mono);font-size:7.5px;color:'+dc(w.domain)+';letter-spacing:1px;margin-bottom:5px">WAVE '+(wi+1)+' · ['+w.domain+'] · "'+(w.startContent||'').slice(0,50)+'"</div>';
+    w.hops.slice(0,7).forEach(function(h){var s2=pct(h.signal),n=S.gd.nodes.find(function(x){return x.id===h.id;}),d2=n?n.domain:'';html+='<div class="wave-row"><span class="wd">step '+h.depth+'</span><span class="wdom" style="color:'+dc(d2)+'">['+(d2.replace(/_/g,' '))+']</span><div class="wb"><div class="wf" style="width:'+s2+'%;background:'+dc(d2)+'"></div></div><span class="wp" style="color:'+dc(d2)+'">'+s2+'%</span></div>';});
+    if(w.hops.length>7)html+='<div style="font-family:var(--mono);font-size:7.5px;color:var(--tmut);margin-left:162px">+'+(w.hops.length-7)+' more nodes</div>';
+    html+='</div>';
+  });
+  if(S.engR.assumptions.length){
+    var rcmap={CRITICAL:'var(--red)',HIGH:'var(--amber)',MEDIUM:'var(--blue)',LOW:'var(--green)'};
+    html+='<div class="shdr">HIDDEN ASSUMPTIONS — '+S.engR.assumptions.length+' found</div>';
+    S.engR.assumptions.forEach(function(a){
+      var rc=rcmap[a.risk]||'var(--blue)',c=pct(a.node.confidence),f=pct(a.fragility);
+      html+='<div class="finding" style="border-left:2px solid '+rc+';border-color:#1a1a35"><div class="fl" style="color:'+rc+'">'+a.risk+' RISK · '+(a.node.domain||'').replace(/_/g,' ')+(a.node.never_verified?' · NEVER VERIFIED':'')+'</div><div class="ft" style="margin-bottom:9px">"'+a.node.content+'"</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><div><div style="font-family:var(--mono);font-size:7.5px;color:var(--tmut);margin-bottom:3px">How certain?</div><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:3px;background:var(--bd)"><div style="height:100%;width:'+c+'%;background:'+cc(a.node.confidence)+'"></div></div><span style="font-family:var(--mono);font-size:8px;color:var(--tdim)">'+c+'%</span></div></div><div><div style="font-family:var(--mono);font-size:7.5px;color:var(--tmut);margin-bottom:3px">How fragile?</div><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:3px;background:var(--bd)"><div style="height:100%;width:'+f+'%;background:'+rc+'"></div></div><span style="font-family:var(--mono);font-size:8px;color:var(--tdim)">'+f+'%</span></div></div></div></div>';
+    });
+  }
+  if(S.engR.resonances.length){
+    html+='<div class="shdr">CROSS-DOMAIN RESONANCE — '+S.engR.resonances.length+' structural connections</div>';
+    S.engR.resonances.slice(0,6).forEach(function(r){html+='<div class="finding" style="border-color:#0a3828;background:rgba(40,168,136,.04)"><div class="fl" style="color:var(--teal)">'+r.strength+' · '+Math.round(r.score*100)+'% match · '+r.nodeA.domain.replace(/_/g,' ')+' vs '+r.nodeB.domain.replace(/_/g,' ')+'</div><div class="ft">"'+r.nodeA.content.slice(0,65)+'"<br><span style="color:var(--tdim)">structurally matches</span><br>"'+r.nodeB.content.slice(0,65)+'"<br><span style="color:var(--tdim);font-size:8.5px">These two completely different parts of your situation are being driven by the same thing underneath.</span></div></div>';});
+  }
+  b.innerHTML=html;
+}
+
+function renderInsight(){
+  if(!S.insight)return;
+  var p=document.getElementById('insight-panel'),b=document.getElementById('insight-body');
+  if(!p||!b)return;p.style.display='';
+  var m=getModel();
+  var domCount=0;if(S.gd)S.gd.nodes.forEach(function(n){});
+  b.innerHTML='<div class="ibox"><div class="ilbl">What GOT Found</div><div class="imod">Generated by '+m.label+' · '+S.modelName+'</div><div class="itxt">'+S.insight+'</div></div><div class="ifoot">Graph of Thought Engine · Pithonix.ai · Built by Jeet, Hyderabad, India</div>';
+}
+
+function renderHiddenNode(){
+  if(!S.hiddenNode)return;
+  var p=document.getElementById('hidden-panel'),b=document.getElementById('hidden-body');
+  if(!p||!b)return;p.style.display='';
+  b.innerHTML='<div class="hn-wrap"><div class="hn-label">✦&nbsp; What you never said — but GOT saw</div><div class="hn-text">'+S.hiddenNode+'</div><div class="hn-sub">This was not in your scenario. It was not in your questions. GOT surfaced it from the pattern of everything you said — and everything you did not say.</div></div>';
+  p.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── UI BUILDERS ───────────────────────────────────────────────────────────────
+function buildModelPills(){
+  var el=document.getElementById('mpills');if(!el)return;
+  el.innerHTML=MODELS.map(function(m){var on=m.id===S.modelId;return '<div class="mp'+(on?' on':'')+'" style="'+(on?'border-color:'+m.col+';color:'+m.col:'')+'" onclick="selectModel(\''+m.id+'\')">'+m.label+'</div>';}).join('');
+}
+
+function buildConfigInputs(){
+  var m=getModel();
+  var t=document.getElementById('cfg-title');if(t)t.textContent='Configure — '+m.label;
+  var inp=document.getElementById('cfg-inputs');if(!inp)return;
+  var savedKey='';try{savedKey=localStorage.getItem('got_key_'+m.id)||'';}catch(e){}
+  if(savedKey&&!S.apiKey)S.apiKey=savedKey;
+  var keyVal=S.apiKey||savedKey||'';
+  var keySaved=savedKey?'<span style="color:var(--green)">&#10003; saved</span>':'';
+  var modelOpts=m.models.length?('<select id="model-select">'+m.models.map(function(mo){return '<option value="'+mo+'"'+(mo===m.def?' selected':'')+'>'+mo+'</option>';}).join('')+'</select>'):('<input type="text" id="model-select" placeholder="Enter model name..." value="'+(m.def||'')+'">');
+  var customHtml=m.id==='custom'?('<div><label>Base URL</label><input type="text" id="custom-base" placeholder="https://api.provider.com/v1" value="'+(S.customBase||'')+'"><div class="hint">Any OpenAI-compatible endpoint</div></div>'):('<div style="display:flex;align-items:flex-end;padding-bottom:2px"><div style="font-family:var(--mono);font-size:8.5px;color:var(--tdim);line-height:1.8">GOT architecture is the constant.<br>The model is the variable.</div></div>');
+  inp.innerHTML='<div><label>'+m.keyLabel+'</label><input type="password" id="key-input" placeholder="'+m.keyph+'" value="'+keyVal+'" autocomplete="off"><div class="hint">'+m.hint+' &nbsp; '+keySaved+'</div></div><div><label>Model</label>'+modelOpts+'</div>'+customHtml;
+}
+
+function buildScenarioPills(){
+  var wrap=document.getElementById('scenario-pills');if(!wrap)return;
+  var html='';
+  Object.keys(CATS).forEach(function(cat){
+    html+='<div class="scat">'+cat+'</div><div class="spills">';
+    CATS[cat].forEach(function(sc){html+='<div class="sp'+(S.scenarioId===sc.id?' on':'')+'" onclick="selectScenario(\''+sc.id+'\')">'+sc.name+'</div>';});
+    html+='</div>';
+  });
+  html+='<div class="scat">Custom</div><div class="spills"><div class="sp'+(!S.scenarioId?' on':'')+'" onclick="selectScenario(null)">Write your own...</div></div>';
+  wrap.innerHTML=html;
+  buildScenarioText();
+}
+
+function buildScenarioText(){
+  var wrap=document.getElementById('scenario-text-wrap');if(!wrap)return;
+  if(!S.scenarioId){
+    wrap.innerHTML='<textarea id="custom-text" placeholder="Any situation — geopolitical crisis, cultural shift, climate emergency, social movement, family decision, business problem. Any domain. Any scale. Any person on earth.">'+S.customText+'</textarea>';
+    var ct=document.getElementById('custom-text');if(ct)ct.addEventListener('input',function(e){S.customText=e.target.value;});
+  }else{
+    var all=[];Object.keys(CATS).forEach(function(k){CATS[k].forEach(function(s){all.push(s);});});
+    var sc=all.find(function(s){return s.id===S.scenarioId;});
+    wrap.innerHTML=sc?'<div style="background:var(--bg);border:1px solid var(--bd);padding:11px 13px;font-family:var(--mono);font-size:9px;color:var(--tdim);line-height:1.8;max-height:110px;overflow-y:auto">'+sc.text+'</div>':'';
+  }
+}
+
+function selectModel(id){
+  S.modelId=id;buildModelPills();buildConfigInputs();
+  var notice=document.getElementById('cors-notice');
+  if(notice){
+    var isLocal=window.location.protocol==='file:';
+    var needsProxy=['gemini','openai','groq','mistral','deepseek','qwen','custom'];
+    notice.style.display=(isLocal&&needsProxy.indexOf(id)>-1)?'':'none';
+  }
+}
+function selectScenario(id){S.scenarioId=id;buildScenarioPills();}
+
+renderShells();buildModelPills();buildConfigInputs();buildScenarioPills();
+</script>
+</body>
+</html>
