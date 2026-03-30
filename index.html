@@ -1297,6 +1297,22 @@
       return pos;
     }
 
+    function fitViewBox(pos) {
+      if (!pos || !Object.keys(pos).length) return;
+      var xs = Object.values(pos).map(function(p){return p.x;}),
+          ys = Object.values(pos).map(function(p){return p.y;});
+      var pad = 60;
+      var minX = Math.min.apply(null, xs) - pad,
+          minY = Math.min.apply(null, ys) - pad,
+          maxX = Math.max.apply(null, xs) + pad,
+          maxY = Math.max.apply(null, ys) + pad;
+      var w = maxX - minX, h = maxY - minY;
+      // Enforce minimum dimensions so sparse graphs don't over-zoom
+      if (w < 400) { var cx = (minX+maxX)/2; minX = cx-200; maxX = cx+200; w = 400; }
+      if (h < 300) { var cy = (minY+maxY)/2; minY = cy-150; maxY = cy+150; h = 300; }
+      document.getElementById('mm').setAttribute('viewBox', minX+' '+minY+' '+w+' '+h);
+    }
+
     function drawSVG(nodes, edges, pos) {
       var gl = document.getElementById('gl'), gn = document.getElementById('gn');
       gl.innerHTML = ''; gn.innerHTML = '';
@@ -1332,6 +1348,7 @@
         (function (el) { setTimeout(function () { el.style.transition = 'opacity 0.3s ease'; el.setAttribute('opacity', '1'); }, 250 + idx * 80); })(g);
         gn.appendChild(g);
       });
+      fitViewBox(pos);
     }
 
     function updateNode(id, state) {
