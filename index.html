@@ -1120,14 +1120,14 @@
       shells: ['idle', 'idle', 'idle', 'idle', 'idle', 'idle'],
       gd: null, pos: {}, engR: null, insight: null,
       phase: 'input', questions: [], answers: {}, hiddenNode: null,
-      liveIntel: null, swarm: null
+      liveIntel: null, swarm: null, prefetchedLiveIntel: null
     };
 
     function getModel() { return MODELS.find(function (m) { return m.id === S.modelId; }) || MODELS[0]; }
 
     // ── SYSTEM PROMPTS ──────────────────────────────────────────────────────────
 
-    var QUESTION_SYS = 'Generate exactly 4 binary clarifying questions about this scenario. CRITICAL RULE: Every question MUST be answerable with only Yes, No, or Not Applicable — no exceptions. Questions must start with "Is", "Are", "Have", "Has", "Do", "Does", "Did", "Will", or "Would". They should uncover hidden context across personal, relational, financial, or situational dimensions. BAD example (open-ended, forbidden): "What does this reveal about your identity?" GOOD example (binary, required): "Is this situation directly affecting someone close to you?" Return ONLY valid JSON, no markdown: {"questions":[{"id":"q1","text":"the question","domain":"PSYCHOLOGICAL","reveals":"hidden truth"}]} Exactly 4 questions. Return ONLY the JSON object starting with { and ending with }.';
+    var QUESTION_SYS = 'You are GOT — Graph of Thought reasoning engine. Your job is to generate exactly 4 binary clarifying questions that will SHARPEN the analysis of the scenario and any live intelligence sources provided.\n\nCRITICAL: If LIVE INTELLIGENCE sources are included in the input, your questions MUST probe those specific sources — interrogate the specific claims, gaps, or contradictions in the live data. Do NOT ask generic abstract questions when real-world data is available.\n\nEach question MUST be answerable with Yes, No, or Not Applicable only. Start with "Is", "Are", "Have", "Has", "Do", "Does", "Did", "Will", or "Would".\n\nFocus on: verifying specific claims from live sources, exposing hidden assumptions, probing the most fragile facts, understanding who the key actors are and what they have actually done or decided.\n\nBAD (generic, forbidden): "Is this situation affecting someone emotionally?" GOOD (source-driven): "Has India already signed new oil supply agreements with Russia since January 2025?"\n\nReturn ONLY valid JSON, no markdown: {"questions":[{"id":"q1","text":"the question","domain":"GEOPOLITICAL","reveals":"what this confirms or rules out"}]} Exactly 4 questions. Return ONLY the JSON object starting with { and ending with }.';
 
     var GRAPH_SYS = [
       'Extract a causal reasoning graph. Return ONLY a valid JSON object.',
@@ -1142,9 +1142,9 @@
 
     var SWARM_SYS = 'You are simulating 6 different personality archetypes inside an organisation reacting to a GOT analysis finding. Map each archetype to the OCEAN personality framework. Return ONLY valid JSON — no markdown, no explanation, start with { and end with }. Each field must be under 70 characters. Plain language only. Write like a sharp observer, not a consultant. Return exactly: {"swarm":[{"archetype":"The Innovator","ocean_trait":"High Openness","hex":"#3a7fd4","initial_reaction":"one plain sentence of their gut reaction","likely_action":"what they actually do in the next 48 hours","watch_signal":"one specific observable signal that confirms their pattern"}]} Six archetypes in this order: The Innovator (High Openness — curious, sees opportunity), The Gatekeeper (High Conscientiousness — process-driven, cautious), The Amplifier (High Extraversion — vocal, politically aware), The Mediator (High Agreeableness — harmony-focused, avoids conflict), The Worrier (High Neuroticism — risk-sensitive, worst-case thinker), The Skeptic (Low all traits — detached, sees through narratives). Use hex colors: Innovator #3a7fd4, Gatekeeper #3aaa5a, Amplifier #e8b84b, Mediator #28a888, Worrier #d04545, Skeptic #605070.';
 
-    var INSIGHT_SYS = 'You are a brilliant friend explaining something important over coffee — smart, clear, zero jargon. Your reader is intelligent but not an expert. Write like you are telling a story, not filing a report. Use short sentences. Use plain words. Use real-world analogies. Never use words like "geopolitical", "nascent", "multilateral", "systemic resilience", "strategic recalibration", "hegemonic", or any bureaucratic language. Write 4 paragraphs:\n\nParagraph 1 — The Big Mistake Everyone Is Making: Start with "Here is the thing nobody is saying out loud —" and explain the core flawed assumption in plain story form. What are people getting wrong, and why does it matter?\n\nParagraph 2 — Three Things That Will Happen That Nobody Sees Coming: Tell it like a story. "First, this will happen. Then, because of that, this will follow. And here is the one nobody sees —" Make each consequence feel real, not abstract.\n\nParagraph 3 — What Needs to Change: Explain what shifts are needed in simple, human terms. Not policy language — think of it like advice to a friend navigating a hard situation.\n\nParagraph 4 — The One Signal to Watch: End with one specific, concrete thing the reader can actually watch for that will confirm everything in this analysis is playing out. Make it feel like a tip from someone who has seen this before.\n\nWrite with warmth and confidence. Always finish every sentence. No bullet points. No headings.';
+    var INSIGHT_SYS = 'You are GOT — Graph of Thought — a reasoning engine that gives direct, specific, factual answers. You have access to the reasoning graph AND live intelligence sources. Your job is to directly answer the question asked in the scenario.\n\nRULES:\n- If the input includes live_intel sources, reference them specifically by name or content. Do not speak in generalities when you have real data.\n- DIRECTLY answer the actual question. If asked about probability of war, give a probability range with reasoning. If asked about India\'s position, state it specifically.\n- No metaphors, no analogies, no "brilliant friend" framing. Be sharp and direct.\n- No bureaucratic language. Short sentences. Plain words.\n- Always finish every sentence.\n\nWrite 4 paragraphs:\n\nParagraph 1 — Direct Answer: Answer the exact question asked. State the core finding clearly. If a probability or likelihood is asked for, give one with reasoning. Reference any live intel that directly speaks to this.\n\nParagraph 2 — The Key Causal Chain: Explain the three most important cause-and-effect links GOT found across the domains. Be specific about what drives what. Reference real facts from the live intel where available.\n\nParagraph 3 — What This Means for the Specific Actors Named: Focus on the specific countries, organisations, or people mentioned in the question. What are they actually doing, what decision are they facing, what are their real options?\n\nParagraph 4 — The One Signal to Watch: Name a specific, concrete, verifiable thing — a policy decision, a data release, a trade deal, a military movement — that will confirm or contradict this analysis. Make it actionable.\n\nNo bullet points. No headings. No metaphors.';
 
-    var HIDDEN_SYS = 'You are a sharp, compassionate friend who sees what people are not saying. Your job is to find the ONE real thing driving this whole situation — the thing the person has not put into words but which is clearly underneath everything. Write in plain, warm, direct English — no jargon, no academic language, no long sentences. Write like you are gently but honestly telling someone something true about themselves.\n\nParagraph 1: Start with exactly "What you never said — but what is really driving all of this —" and then name the hidden fear, hope, or belief in one or two simple sentences. Make it feel like a moment of recognition, not a lecture.\n\nParagraph 2: Explain how this hidden thing is quietly shaping the way they see the facts — like a lens they do not know they are wearing. Use a simple analogy if it helps.\n\nParagraph 3: Explain what is really at stake for the person — not in abstract terms, but in human terms. What are they actually afraid of losing or gaining?\n\nParagraph 4: End with one honest, kind sentence that brings it all together — something that would make a person nod and say "yeah, that is exactly it." Always finish every sentence completely.';
+    var HIDDEN_SYS = 'You are GOT — Graph of Thought. After full analysis, your job is to surface the ONE hidden signal or structural reality about this SITUATION that nobody is discussing — not in the mainstream commentary, not in the news sources, not in the official framing. This is about the situation itself, not about the person asking.\n\nRules:\n- This is about the SITUATION, not about the person\'s emotions or psychology. Do NOT profile the person asking.\n- Find the structural gap, the hidden actor, the unspoken trade-off, or the second-order consequence that is real but invisible in the public discourse.\n- Be specific. Name real dynamics, real actors, real decisions. Avoid generic statements about fear or hope.\n- Plain language. Short sentences. No jargon.\n- Always finish every sentence.\n\nWrite 3 paragraphs:\n\nParagraph 1: Start with exactly "What you never said — but GOT saw —" and in two sentences name the specific hidden dynamic or structural reality in this situation that is not being openly discussed.\n\nParagraph 2: Explain why this hidden dynamic matters — what it actually changes about how the situation will unfold. Be concrete about the mechanism.\n\nParagraph 3: Name the one specific actor, decision, or data point that, if it moves, will expose this hidden dynamic publicly. Make it a real, watchable signal.\n\nThis was not in the scenario. It was not in the questions. GOT surfaced it from the pattern of everything said — and everything not said.';
 
     // ── API LAYER ────────────────────────────────────────────────────────────────
     function callModel(system, user, maxTokens) {
@@ -1401,8 +1401,18 @@
       if (m.type !== 'ollama' && !key) { alert('Enter your ' + m.label + ' API key.'); return; }
       if (key) { try { localStorage.setItem('got_key_' + m.id, key); } catch (e) { } }
       var rb = document.getElementById('run-btn');
-      if (rb) { rb.disabled = true; rb.innerHTML = '<span class="spin"></span>GOT is reading your situation...'; }
-      callJSON(QUESTION_SYS, text).then(function (data) {
+      if (rb) { rb.disabled = true; rb.innerHTML = '<span class="spin"></span>Fetching live intelligence...'; }
+      S.prefetchedLiveIntel = null;
+      fetchLiveIntel(text).then(function(liveResults) {
+        S.prefetchedLiveIntel = liveResults && liveResults.length ? liveResults : null;
+        var qContext = text;
+        if (S.prefetchedLiveIntel) qContext += buildLiveIntelContext(S.prefetchedLiveIntel);
+        if (rb) rb.innerHTML = '<span class="spin"></span>GOT is reading your situation...';
+        return callJSON(QUESTION_SYS, qContext);
+      }).catch(function() {
+        if (rb) rb.innerHTML = '<span class="spin"></span>GOT is reading your situation...';
+        return callJSON(QUESTION_SYS, text);
+      }).then(function (data) {
         S.questions = data.questions || []; S.answers = {}; S.phase = 'questions';
         if (S.questions.length) {
           renderQuestionPhase();
@@ -1468,7 +1478,7 @@
         S.questions.forEach(function (q) { var a = S.answers[q.id]; if (a && a.trim()) enriched += q.text + ' Answer: ' + a.trim() + '\n'; });
       }
       S.running = true; S.gd = null; S.engR = null; S.insight = null; S.pos = {};
-      S.liveIntel = null; S.swarm = null;
+      S.liveIntel = S.prefetchedLiveIntel || null; S.swarm = null;
       S.shells = ['idle', 'idle', 'idle', 'idle', 'idle', 'idle'];
       var rb = document.getElementById('run-btn');
       if (rb) { rb.disabled = true; rb.innerHTML = '<span class="spin"></span>Fetching live intelligence...'; }
@@ -1476,23 +1486,29 @@
       var ld = document.getElementById('logd'); if (ld) ld.innerHTML = '';
       renderShells();
       addLog(getModel().label + ' · ' + S.modelName, 'lpurp');
-      addLog('Fetching live intelligence from the web...', 'lgold');
-
-      // Phase 0: Fetch live intel via Tavily (non-blocking — GOT continues even if empty)
-      fetchLiveIntel(text).then(function(results) {
-        S.liveIntel = results;
-        if (results && results.length) {
-          addLog('Live intel: ' + results.length + ' sources retrieved', 'lok');
-          renderLiveIntel();
-          enriched += buildLiveIntelContext(results);
-        } else {
-          addLog('Live intel: running without web context', '');
-        }
-        if (rb) rb.innerHTML = '<span class="spin"></span>Reasoning across all domains...';
-        addLog('Extracting reasoning graph...', 'lgold');
-      }).catch(function() {
-        addLog('Live intel unavailable — proceeding', '');
-      }).then(function() {
+      // Phase 0: Use prefetched live intel (already fetched during question phase) or fetch now
+      var liveIntelPromise;
+      if (S.liveIntel && S.liveIntel.length) {
+        addLog('Live intel: ' + S.liveIntel.length + ' sources (from question phase)', 'lok');
+        renderLiveIntel();
+        enriched += buildLiveIntelContext(S.liveIntel);
+        liveIntelPromise = Promise.resolve();
+      } else {
+        addLog('Fetching live intelligence from the web...', 'lgold');
+        liveIntelPromise = fetchLiveIntel(text).then(function(results) {
+          S.liveIntel = results && results.length ? results : null;
+          if (S.liveIntel) {
+            addLog('Live intel: ' + S.liveIntel.length + ' sources retrieved', 'lok');
+            renderLiveIntel();
+            enriched += buildLiveIntelContext(S.liveIntel);
+          } else {
+            addLog('Live intel: running without web context', '');
+          }
+        }).catch(function() { addLog('Live intel unavailable — proceeding', ''); });
+      }
+      if (rb) rb.innerHTML = '<span class="spin"></span>Reasoning across all domains...';
+      addLog('Extracting reasoning graph...', 'lgold');
+      liveIntelPromise.then(function() {
       // Phase 1–5: core GOT reasoning
       callJSON(GRAPH_SYS, enriched).then(function (raw) {
         S.gd = raw;
@@ -1547,19 +1563,35 @@
         setShell(4, 'done'); addLog('Layer 5 done: ' + S.engR.resonances.length + ' cross-domain connections', 'lok');
         S.gd.nodes.forEach(function (n) { if (!S.engR.assumptions.some(function (a) { return a.node.id === n.id && a.fragility >= 0.5; })) updateNode(n.id, 'STABILIZED'); });
         renderFindings(); addLog('Synthesising insight report...', 'lgold');
-        var payload = { scenario: S.gd.graph_name, domains: [], root_causes: S.engR.rootCauses.map(function (r) { return r.content; }), most_fragile: S.engR.assumptions[0] && S.engR.assumptions[0].node.content, fragility_pct: pct(S.engR.assumptions[0] && S.engR.assumptions[0].fragility || 0) + '%', never_verified: S.engR.assumptions[0] && S.engR.assumptions[0].node.never_verified, resonances: S.engR.resonances.length, intersections: S.engR.intersections.length };
+        var payload = {
+          original_question: text.slice(0, 600),
+          scenario: S.gd.graph_name,
+          domains: [],
+          root_causes: S.engR.rootCauses.map(function (r) { return r.content; }),
+          most_fragile: S.engR.assumptions[0] && S.engR.assumptions[0].node.content,
+          fragility_pct: pct(S.engR.assumptions[0] && S.engR.assumptions[0].fragility || 0) + '%',
+          never_verified: S.engR.assumptions[0] && S.engR.assumptions[0].node.never_verified,
+          resonances: S.engR.resonances.length,
+          intersections: S.engR.intersections.length,
+          live_intel: S.liveIntel ? S.liveIntel.slice(0, 4).map(function(r) { return { title: r.title, snippet: (r.content || '').slice(0, 250) }; }) : []
+        };
         S.gd.nodes.forEach(function (n) { if (payload.domains.indexOf(n.domain) < 0) payload.domains.push(n.domain); });
         return callModel(INSIGHT_SYS, JSON.stringify(payload), 8000);
       }).then(function (insight) {
         S.insight = insight; addLog('Insight complete.', 'lok'); renderInsight();
-        // Hidden node (only when questions were answered)
-        var hiddenPromise = Promise.resolve();
-        if (S.questions.length) {
-          var ctx = 'Original situation:\n' + text + '\n\n';
-          ctx += 'Questions and answers:\n';
-          S.questions.forEach(function (q) { ctx += 'Q: ' + q.text + '\nA: ' + (S.answers[q.id] || '[not answered]') + '\n\n'; });
-          hiddenPromise = callModel(HIDDEN_SYS, ctx, 4000).then(function (hn) { S.hiddenNode = hn; renderHiddenNode(); }).catch(function () { });
+        // Hidden node — always runs, surfaces hidden structural signals about the situation
+        var ctx = 'ORIGINAL SITUATION:\n' + text + '\n\n';
+        ctx += 'GOT GRAPH SUMMARY:\n' + (S.gd ? S.gd.graph_name : '') + '\n';
+        ctx += 'ROOT CAUSES: ' + S.engR.rootCauses.map(function(r){return r.content;}).join(', ') + '\n';
+        if (S.liveIntel && S.liveIntel.length) {
+          ctx += '\nLIVE INTELLIGENCE:\n';
+          S.liveIntel.slice(0, 3).forEach(function(r) { ctx += '- ' + r.title + ': ' + (r.content || '').slice(0, 200) + '\n'; });
         }
+        if (S.questions.length) {
+          ctx += '\nQ&A CONTEXT:\n';
+          S.questions.forEach(function (q) { ctx += 'Q: ' + q.text + '\nA: ' + (S.answers[q.id] || '[not answered]') + '\n'; });
+        }
+        var hiddenPromise = callModel(HIDDEN_SYS, ctx, 4000).then(function (hn) { S.hiddenNode = hn; renderHiddenNode(); }).catch(function () { });
         return hiddenPromise;
       }).then(function() {
         // Phase 6: OCEAN Swarm Simulation
