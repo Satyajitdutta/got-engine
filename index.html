@@ -277,7 +277,7 @@
 
     .shells {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 4px;
       margin-bottom: 14px
     }
@@ -811,6 +811,122 @@
       margin-right: 5px;
       vertical-align: middle
     }
+
+    /* ── Live Intelligence Panel ───────────────────────────────── */
+    .li-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px;
+      margin-bottom: 4px
+    }
+    .li-card {
+      background: var(--s2);
+      border: 1px solid var(--bd);
+      border-left: 2px solid var(--teal);
+      padding: 10px 12px;
+      transition: border-color .2s
+    }
+    .li-card:hover { border-color: var(--teal) }
+    .li-src {
+      font-family: var(--mono);
+      font-size: 7px;
+      color: var(--teal);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+    .li-title {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      color: var(--txt);
+      line-height: 1.5;
+      margin-bottom: 5px
+    }
+    .li-snip {
+      font-family: var(--mono);
+      font-size: 7.5px;
+      color: var(--tdim);
+      line-height: 1.6;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden
+    }
+    .li-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-family: var(--mono);
+      font-size: 7px;
+      color: var(--teal);
+      text-decoration: none;
+      letter-spacing: 1px;
+      opacity: .7
+    }
+    .li-link:hover { opacity: 1 }
+
+    /* ── OCEAN Swarm Panel ─────────────────────────────────────── */
+    .sw-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 8px;
+      margin-bottom: 8px
+    }
+    .sw-card {
+      border: 1px solid var(--bd);
+      padding: 12px;
+      background: var(--s2);
+      position: relative;
+      overflow: hidden
+    }
+    .sw-bar {
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%
+    }
+    .sw-arch {
+      font-family: var(--mono);
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 2px
+    }
+    .sw-ocean {
+      font-family: var(--mono);
+      font-size: 7px;
+      color: var(--tdim);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 9px
+    }
+    .sw-lbl {
+      font-family: var(--mono);
+      font-size: 6.5px;
+      color: var(--tmut);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-top: 7px;
+      margin-bottom: 2px
+    }
+    .sw-txt {
+      font-family: var(--sans);
+      font-size: 9px;
+      color: var(--txt);
+      line-height: 1.55
+    }
+    .sw-watch {
+      margin-top: 7px;
+      font-family: var(--mono);
+      font-size: 8px;
+      color: var(--gold);
+      line-height: 1.55;
+      padding: 5px 8px;
+      background: rgba(232,184,75,.04);
+      border: 1px solid var(--gdim)
+    }
   </style>
 </head>
 
@@ -910,10 +1026,39 @@
       </div>
       <div class="pb" id="hidden-body"></div>
     </div>
+    <div id="live-intel-panel" style="display:none" class="panel">
+      <div class="ph">
+        <div class="pn">◉</div>
+        <div class="pt">Live Intelligence — What the world is saying right now</div>
+      </div>
+      <div class="pb" id="live-intel-body"></div>
+    </div>
+    <div id="swarm-panel" style="display:none" class="panel">
+      <div class="ph">
+        <div class="pn">L6</div>
+        <div class="pt">OCEAN Swarm Simulator — How 6 personality types will respond</div>
+      </div>
+      <div class="pb" id="swarm-body"></div>
+    </div>
   </div>
 
   <script>
-    var DC = { FINANCIAL: '#e8b84b', TRADE: '#d4a030', ECONOMIC_MACRO: '#c89020', REVENUE: '#f0c060', SANCTIONS: '#e05010', HIRING: '#4a8fd4', PRODUCT: '#5aa0f0', SALES: '#3a7fc4', OPERATIONS: '#2a6fb4', STRATEGY: '#3a5fa4', GEOPOLITICAL: '#d04545', DIPLOMATIC: '#c03535', MILITARY: '#b02020', GOVERNANCE: '#e05555', JUDICIAL: '#f06565', ELECTORAL: '#d06060', POLICY: '#c05050', CULTURAL: '#a060d4', SOCIAL: '#8850c4', RELIGIOUS: '#9860c8', ETHNIC: '#b070d8', PSYCHOLOGICAL: '#7050b4', MEDIA: '#c080e0', COMMUNITY: '#9070c0', FAMILY: '#b090d0', HISTORICAL: '#8060b0', ENVIRONMENTAL: '#3aaa5a', CLIMATE: '#28b848', PUBLIC_HEALTH: '#48c868', ENERGY: '#58d878', MIGRATION: '#38a858', TECHNOLOGY: '#28c8d8', CYBER: '#18b8c8', AI_TECHNOLOGY: '#08a8b8', HEALTHCARE: '#48d8a8', LEGAL: '#68c890', UNKNOWN: '#505070' };
+    var DC = {
+      // Original universal domains
+      FINANCIAL: '#e8b84b', TRADE: '#d4a030', ECONOMIC_MACRO: '#c89020', REVENUE: '#f0c060', SANCTIONS: '#e05010',
+      HIRING: '#4a8fd4', PRODUCT: '#5aa0f0', SALES: '#3a7fc4', OPERATIONS: '#2a6fb4', STRATEGY: '#3a5fa4',
+      GEOPOLITICAL: '#d04545', DIPLOMATIC: '#c03535', MILITARY: '#b02020', GOVERNANCE: '#e05555',
+      JUDICIAL: '#f06565', ELECTORAL: '#d06060', POLICY: '#c05050',
+      CULTURAL: '#a060d4', SOCIAL: '#8850c4', RELIGIOUS: '#9860c8', ETHNIC: '#b070d8',
+      PSYCHOLOGICAL: '#7050b4', MEDIA: '#c080e0', COMMUNITY: '#9070c0', FAMILY: '#b090d0', HISTORICAL: '#8060b0',
+      ENVIRONMENTAL: '#3aaa5a', CLIMATE: '#28b848', PUBLIC_HEALTH: '#48c868', ENERGY: '#58d878', MIGRATION: '#38a858',
+      TECHNOLOGY: '#28c8d8', CYBER: '#18b8c8', AI_TECHNOLOGY: '#08a8b8', HEALTHCARE: '#48d8a8', LEGAL: '#68c890',
+      // Enterprise-specific domains
+      TALENT: '#4a9fd4', ATTRITION: '#d45a50', COMPENSATION: '#f0a030', WORKFORCE: '#3ab8a0',
+      CULTURE: '#9060d4', PERFORMANCE: '#40a060', LEARNING: '#8040c0',
+      COMPLIANCE: '#c04040', REGULATORY: '#e04040', MARKET_INTEL: '#4080c0',
+      UNKNOWN: '#505070'
+    };
     function dc(d) { return DC[d] || '#505070'; }
     function cc(v) { return v >= 0.8 ? '#3aaa5a' : v >= 0.5 ? '#e07830' : '#d04545'; }
     function pct(v) { return Math.round((v || 0) * 100); }
@@ -953,15 +1098,29 @@
         { id: 'pricing', name: 'Pricing decision cascade', text: 'A startup founder offered a 30 percent discount to close their first big enterprise client. The client accepted and the founder assumed it was a one-time exception. But the startup world is small and word travels. The next prospect opens negotiations asking for the same discount. The sales team is beginning to believe the product is not worth full price. A fundraising round is three months away.' },
         { id: 'resign', name: 'Key person resignation', text: 'A startup best engineer resigned without warning. The team assumes someone can cover the missing work. A key enterprise demo was committed in five weeks — the reference case for three warm prospects deep in the pipeline. The founder assumed Q3 revenue was safe. Two other engineers are watching carefully how this is handled.' },
         { id: 'personal', name: 'Life-changing personal decision', text: 'A 28-year-old professional has a job offer in a different country — higher pay, better title, strong career trajectory. But it means leaving aging parents who are beginning to need support, and a long-term partner who cannot relocate immediately. The company was acquired six months ago. The relocation offer expires in three weeks. Neither the parents nor the partner have clearly said what they want.' }
+      ],
+      'HR & Talent': [
+        { id: 'attrition_wave', name: 'Attrition wave', text: 'Three senior engineers in the product team have resigned within 60 days. Each cited different reasons on exit. The manager believes it is a compensation issue. HR believes it is a culture problem. The CEO thinks one bad quarter spooked them. A competitor just opened an office in the same city offering 25 percent higher salaries. Two more engineers have been unusually quiet in the last two weeks. The team has a critical product milestone in six weeks and no replacement hiring budget approved.' },
+        { id: 'succession_gap', name: 'Succession vacuum', text: 'The COO of a 2,000-person organisation announced retirement in 90 days. There are three internal candidates and none is ready. The board wants an external hire. The CEO was promoted from within and is resistant to outsiders. The strongest internal candidate is a high performer but has never managed across functions. A headhunter has already approached the COO about joining a competitor before the official announcement became public. Two key direct reports of the COO are watching whether their loyalty to the internal candidate matters.' },
+        { id: 'hiring_paradox', name: 'Hiring freeze paradox', text: 'The company just imposed a company-wide hiring freeze while competitors are aggressively hiring for AI and data engineering skills. The current team is burning out covering open roles. One star performer has an offer from a large tech company paying 40 percent more. The freeze was driven by CFO pressure but the CEO quietly disagrees with it. The product roadmap was built assuming three new hires that will not now arrive. Two job offers the company made last week cannot legally be rescinded.' }
+      ],
+      'Compliance & Governance': [
+        { id: 'data_exposure', name: 'Employee data breach', text: 'A third-party vendor accidentally exposed employee personal data including salary bands and performance ratings to other client companies for 11 days before it was caught internally. Legal is debating whether the exposure crosses the statutory notification threshold. Three employees whose data was exposed sit on the works council and have already spoken to a lawyer. The vendor is also a critical operational partner handling payroll. The Data Protection Authority has recently imposed large fines on two competitors for similar incidents.' },
+        { id: 'audit_finding', name: 'Undisclosed audit finding', text: 'An internal audit found that expense claims for three senior managers were approved without documentation over 18 months, totalling approximately 45 lakh rupees. The managers are in the most client-critical delivery team. The Chief Audit Officer has flagged it for the board risk committee. One of the managers received the highest performance rating last quarter. The board meeting is in 11 days. External auditors are due on site in three weeks for the annual review.' }
+      ],
+      'Enterprise Strategy': [
+        { id: 'gcc_expansion', name: 'GCC market entry', text: 'A mid-size IT services company is planning to open a Global Capability Centre in Hyderabad within 12 months. The leadership team has never operated a captive centre before. Three of their top India-based clients already have existing GCCs competing for the same talent pool. Their current Bangalore office is at full capacity. The company has signed an MOU with the state government including a 200-person hiring commitment in year one. A recession is being forecast in their primary US market where 70 percent of their revenue comes from.' },
+        { id: 'merger_drag', name: 'Post-merger people drag', text: 'A company completed an acquisition six months ago. The integration was declared on track in the last board meeting. But the acquired company engineering team has a 35 percent higher attrition rate than pre-merger. Three acquired senior managers have not attended a single cross-company meeting. The acquiring company culture deck was sent to all acquired employees but never discussed in person. Both HR and payroll systems are still running separately. The CEO has promised the board measurable synergies by Q3 and is running out of time.' }
       ]
     };
 
     var S = {
       modelId: 'anthropic', apiKey: '', modelName: 'claude-3-5-sonnet-latest', customBase: '',
       scenarioId: null, customText: '', running: false,
-      shells: ['idle', 'idle', 'idle', 'idle', 'idle'],
+      shells: ['idle', 'idle', 'idle', 'idle', 'idle', 'idle'],
       gd: null, pos: {}, engR: null, insight: null,
-      phase: 'input', questions: [], answers: {}, hiddenNode: null
+      phase: 'input', questions: [], answers: {}, hiddenNode: null,
+      liveIntel: null, swarm: null
     };
 
     function getModel() { return MODELS.find(function (m) { return m.id === S.modelId; }) || MODELS[0]; }
@@ -975,11 +1134,13 @@
       'No markdown. No explanation. Start with { and end with }.',
       'Rules: 6 to 8 nodes. Content strings under 50 characters each.',
       'node_type: FACT ASSUMPTION CONSEQUENCE TRIGGER ACTOR CONSTRAINT QUESTION INSIGHT',
-      'domain: FINANCIAL TRADE ECONOMIC_MACRO SANCTIONS HIRING PRODUCT SALES OPERATIONS STRATEGY GEOPOLITICAL DIPLOMATIC MILITARY GOVERNANCE ELECTORAL POLICY CULTURAL SOCIAL RELIGIOUS ETHNIC PSYCHOLOGICAL MEDIA COMMUNITY FAMILY HISTORICAL ENVIRONMENTAL CLIMATE PUBLIC_HEALTH ENERGY MIGRATION TECHNOLOGY CYBER AI_TECHNOLOGY HEALTHCARE LEGAL UNKNOWN',
+      'domain: FINANCIAL TRADE ECONOMIC_MACRO REVENUE HIRING PRODUCT SALES OPERATIONS STRATEGY GEOPOLITICAL DIPLOMATIC GOVERNANCE POLICY CULTURAL SOCIAL PSYCHOLOGICAL MEDIA FAMILY ENVIRONMENTAL CLIMATE PUBLIC_HEALTH ENERGY TECHNOLOGY CYBER AI_TECHNOLOGY HEALTHCARE LEGAL TALENT ATTRITION COMPENSATION WORKFORCE CULTURE PERFORMANCE LEARNING COMPLIANCE REGULATORY MARKET_INTEL UNKNOWN',
       'edge_type: CAUSAL_FORWARD ASSUMPTION_OF CONTRADICTION AMPLIFIES CONSTRAINS',
       'confidence: number 0.05 to 0.95. never_verified: true or false.',
       'Return exactly: {"graph_name":"short name","nodes":[{"id":"n1","content":"text","node_type":"FACT","domain":"DOMAIN","confidence":0.8,"never_verified":false}],"edges":[{"from":"n1","to":"n2","edge_type":"CAUSAL_FORWARD","weight":0.8,"label":"causes"}]}'
     ].join(' ');
+
+    var SWARM_SYS = 'You are simulating 6 different personality archetypes inside an organisation reacting to a GOT analysis finding. Map each archetype to the OCEAN personality framework. Return ONLY valid JSON — no markdown, no explanation, start with { and end with }. Each field must be under 70 characters. Plain language only. Write like a sharp observer, not a consultant. Return exactly: {"swarm":[{"archetype":"The Innovator","ocean_trait":"High Openness","hex":"#3a7fd4","initial_reaction":"one plain sentence of their gut reaction","likely_action":"what they actually do in the next 48 hours","watch_signal":"one specific observable signal that confirms their pattern"}]} Six archetypes in this order: The Innovator (High Openness — curious, sees opportunity), The Gatekeeper (High Conscientiousness — process-driven, cautious), The Amplifier (High Extraversion — vocal, politically aware), The Mediator (High Agreeableness — harmony-focused, avoids conflict), The Worrier (High Neuroticism — risk-sensitive, worst-case thinker), The Skeptic (Low all traits — detached, sees through narratives). Use hex colors: Innovator #3a7fd4, Gatekeeper #3aaa5a, Amplifier #e8b84b, Mediator #28a888, Worrier #d04545, Skeptic #605070.';
 
     var INSIGHT_SYS = 'You are a brilliant friend explaining something important over coffee — smart, clear, zero jargon. Your reader is intelligent but not an expert. Write like you are telling a story, not filing a report. Use short sentences. Use plain words. Use real-world analogies. Never use words like "geopolitical", "nascent", "multilateral", "systemic resilience", "strategic recalibration", "hegemonic", or any bureaucratic language. Write 4 paragraphs:\n\nParagraph 1 — The Big Mistake Everyone Is Making: Start with "Here is the thing nobody is saying out loud —" and explain the core flawed assumption in plain story form. What are people getting wrong, and why does it matter?\n\nParagraph 2 — Three Things That Will Happen That Nobody Sees Coming: Tell it like a story. "First, this will happen. Then, because of that, this will follow. And here is the one nobody sees —" Make each consequence feel real, not abstract.\n\nParagraph 3 — What Needs to Change: Explain what shifts are needed in simple, human terms. Not policy language — think of it like advice to a friend navigating a hard situation.\n\nParagraph 4 — The One Signal to Watch: End with one specific, concrete thing the reader can actually watch for that will confirm everything in this analysis is playing out. Make it feel like a tip from someone who has seen this before.\n\nWrite with warmth and confidence. Always finish every sentence. No bullet points. No headings.';
 
@@ -1033,6 +1194,28 @@
     }
 
     function repairJSON(s) { var r = s.trim(); r = r.replace(/(:\s*\d+\.)(\s*[,}\]\n])/g, '$10$2'); r = r.replace(/,(\s*[}\]])/g, '$1'); r = r.replace(/,\s*"[^"]*"\s*:\s*$/, ''); r = r.replace(/,\s*"[^"]*"\s*$/, ''); var op = (r.match(/[{[]/g) || []).length, cl = (r.match(/[}\]]/g) || []).length; for (var i = 0; i < op - cl; i++) { var last = ''; for (var j = r.length - 1; j >= 0; j--) { if (r[j] === '{') { last = '{'; break; } if (r[j] === '[') { last = '['; break; } } r += (last === '{') ? '}' : ']'; } return r; }
+
+    // ── LIVE INTELLIGENCE (Tavily) ────────────────────────────────────────────────
+    function fetchLiveIntel(query) {
+      // Trim query to most informative ~120 chars for better search precision
+      var q = query.trim().slice(0, 120);
+      return fetch('/api/tavily', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+      }).then(function(r) { return r.json(); })
+        .then(function(d) { return d.results || []; })
+        .catch(function() { return []; }); // always resolve, never block GOT
+    }
+
+    function buildLiveIntelContext(results) {
+      if (!results || !results.length) return '';
+      var ctx = '\n\nLIVE INTELLIGENCE (current real-world context):\n';
+      results.slice(0, 4).forEach(function(r, i) {
+        ctx += '[' + (i + 1) + '] ' + r.title + '\n    ' + (r.content || '').slice(0, 200) + '\n';
+      });
+      return ctx;
+    }
 
     // ── ENGINE LOGIC ─────────────────────────────────────────────────────────────
     function runEngines(nodes, edges) {
@@ -1268,14 +1451,32 @@
         S.questions.forEach(function (q) { var a = S.answers[q.id]; if (a && a.trim()) enriched += q.text + ' Answer: ' + a.trim() + '\n'; });
       }
       S.running = true; S.gd = null; S.engR = null; S.insight = null; S.pos = {};
-      S.shells = ['idle', 'idle', 'idle', 'idle', 'idle'];
+      S.liveIntel = null; S.swarm = null;
+      S.shells = ['idle', 'idle', 'idle', 'idle', 'idle', 'idle'];
       var rb = document.getElementById('run-btn');
-      if (rb) { rb.disabled = true; rb.innerHTML = '<span class="spin"></span>Reasoning across all domains...'; }
-      ['log-panel', 'nodes-panel', 'findings-panel', 'insight-panel', 'hidden-panel'].forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
+      if (rb) { rb.disabled = true; rb.innerHTML = '<span class="spin"></span>Fetching live intelligence...'; }
+      ['log-panel', 'nodes-panel', 'findings-panel', 'insight-panel', 'hidden-panel', 'live-intel-panel', 'swarm-panel'].forEach(function (id) { var el = document.getElementById(id); if (el) el.style.display = 'none'; });
       var ld = document.getElementById('logd'); if (ld) ld.innerHTML = '';
       renderShells();
       addLog(getModel().label + ' · ' + S.modelName, 'lpurp');
-      addLog('Extracting universal reasoning graph...', 'lgold');
+      addLog('Fetching live intelligence from the web...', 'lgold');
+
+      // Phase 0: Fetch live intel via Tavily (non-blocking — GOT continues even if empty)
+      fetchLiveIntel(text).then(function(results) {
+        S.liveIntel = results;
+        if (results && results.length) {
+          addLog('Live intel: ' + results.length + ' sources retrieved', 'lok');
+          renderLiveIntel();
+          enriched += buildLiveIntelContext(results);
+        } else {
+          addLog('Live intel: running without web context', '');
+        }
+        if (rb) rb.innerHTML = '<span class="spin"></span>Reasoning across all domains...';
+        addLog('Extracting reasoning graph...', 'lgold');
+      }).catch(function() {
+        addLog('Live intel unavailable — proceeding', '');
+      }).then(function() {
+      // Phase 1–5: core GOT reasoning
       callJSON(GRAPH_SYS, enriched).then(function (raw) {
         S.gd = raw;
         var bw = (raw.edges || []).filter(function (e) { return e.edge_type === 'CAUSAL_FORWARD'; }).map(function (e) { return { from: e.to, to: e.from, edge_type: 'CAUSAL_BACKWARD', weight: e.weight }; });
@@ -1333,27 +1534,44 @@
         S.gd.nodes.forEach(function (n) { if (payload.domains.indexOf(n.domain) < 0) payload.domains.push(n.domain); });
         return callModel(INSIGHT_SYS, JSON.stringify(payload), 8000);
       }).then(function (insight) {
-        S.insight = insight; addLog('Complete.', 'lok'); renderInsight();
+        S.insight = insight; addLog('Insight complete.', 'lok'); renderInsight();
+        // Hidden node (only when questions were answered)
+        var hiddenPromise = Promise.resolve();
         if (S.questions.length) {
           var ctx = 'Original situation:\n' + text + '\n\n';
           ctx += 'Questions and answers:\n';
           S.questions.forEach(function (q) { ctx += 'Q: ' + q.text + '\nA: ' + (S.answers[q.id] || '[not answered]') + '\n\n'; });
-          return callModel(HIDDEN_SYS, ctx, 4000).then(function (hn) { S.hiddenNode = hn; renderHiddenNode(); }).catch(function () { });
+          hiddenPromise = callModel(HIDDEN_SYS, ctx, 4000).then(function (hn) { S.hiddenNode = hn; renderHiddenNode(); }).catch(function () { });
         }
+        return hiddenPromise;
+      }).then(function() {
+        // Phase 6: OCEAN Swarm Simulation
+        if (!S.engR || !S.insight) return;
+        setShell(5, 'active');
+        addLog('Layer 6 — Swarm Intelligence: simulating 6 OCEAN archetypes...', 'lgold');
+        var swarmCtx = 'SITUATION SUMMARY:\n' + (S.gd ? S.gd.graph_name : text.slice(0, 200)) + '\n\n';
+        swarmCtx += 'GOT KEY FINDING:\n' + S.insight.slice(0, 600) + '\n\n';
+        if (S.engR.rootCauses.length) swarmCtx += 'ROOT CAUSES: ' + S.engR.rootCauses.map(function(r){return r.content;}).join(', ') + '\n';
+        return callJSON(SWARM_SYS, swarmCtx).then(function(sw) {
+          S.swarm = sw.swarm || [];
+          setShell(5, 'done');
+          addLog('Swarm: ' + S.swarm.length + ' personas simulated', 'lok');
+          renderSwarm();
+        }).catch(function() { setShell(5, 'done'); addLog('Swarm skipped', ''); });
       }).catch(function (err) {
         addLog('Error: ' + err.message, 'lerr');
-        // Show error visibly on page too
         var lp = document.getElementById('log-panel'); if (lp) lp.style.display = '';
       }).then(function () {
         S.running = false;
         var rb = document.getElementById('run-btn'); if (rb) { rb.disabled = false; rb.innerHTML = '▶&nbsp; Run Graph of Thought — Universal Mode'; }
       });
+      }); // close fetchLiveIntel.then chain
     }
 
     // ── RENDER HELPERS ───────────────────────────────────────────────────────────
     function renderShells() {
-      var labels = ['L1', 'L2', 'L3', 'L4', 'L5'];
-      var names = ['Node\nEngine', 'Multi-Wave\nPropagation', 'Bidirectional\nCausality', 'Multi-Context\nAssumption', 'Cross-Domain\nResonance'];
+      var labels = ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'];
+      var names = ['Node\nEngine', 'Multi-Wave\nPropagation', 'Bidirectional\nCausality', 'Multi-Context\nAssumption', 'Cross-Domain\nResonance', 'Swarm\nIntelligence'];
       var el = document.getElementById('shells'); if (!el) return;
       el.innerHTML = S.shells.map(function (s, i) { return '<div class="shell ' + s + '"><div class="shn">' + labels[i] + '</div><div class="shl">' + names[i] + '</div></div>'; }).join('');
     }
@@ -1413,6 +1631,43 @@
       var p = document.getElementById('hidden-panel'), b = document.getElementById('hidden-body');
       if (!p || !b) return; p.style.display = '';
       b.innerHTML = '<div class="hn-wrap"><div class="hn-label">✦&nbsp; What you never said — but GOT saw</div><div class="hn-text">' + S.hiddenNode + '</div><div class="hn-sub">This was not in your scenario. It was not in your questions. GOT surfaced it from the pattern of everything you said — and everything you did not say.</div></div>';
+      p.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderLiveIntel() {
+      var results = S.liveIntel; if (!results || !results.length) return;
+      var p = document.getElementById('live-intel-panel'), b = document.getElementById('live-intel-body');
+      if (!p || !b) return; p.style.display = '';
+      b.innerHTML = '<div class="li-grid">' + results.slice(0, 5).map(function(r) {
+        var domain = ''; try { domain = new URL(r.url).hostname.replace('www.',''); } catch(e) { domain = r.url.slice(0,40); }
+        return '<div class="li-card">'
+          + '<div class="li-src">' + domain + '</div>'
+          + '<div class="li-title">' + (r.title || '').slice(0, 80) + '</div>'
+          + '<div class="li-snip">' + (r.content || '').slice(0, 200) + '</div>'
+          + (r.url ? '<a class="li-link" href="' + r.url + '" target="_blank" rel="noopener">↗ source</a>' : '')
+          + '</div>';
+      }).join('') + '</div>'
+        + '<div style="font-family:var(--mono);font-size:7.5px;color:var(--tmut);margin-top:8px">Live context injected into graph extraction · ' + results.length + ' sources · Powered by Tavily</div>';
+    }
+
+    function renderSwarm() {
+      var swarm = S.swarm; if (!swarm || !swarm.length) return;
+      var p = document.getElementById('swarm-panel'), b = document.getElementById('swarm-body');
+      if (!p || !b) return; p.style.display = '';
+      b.innerHTML = '<div class="sw-grid">' + swarm.map(function(sw) {
+        var col = sw.hex || '#505070';
+        return '<div class="sw-card">'
+          + '<div class="sw-bar" style="background:' + col + '"></div>'
+          + '<div class="sw-arch" style="color:' + col + '">' + (sw.archetype || '') + '</div>'
+          + '<div class="sw-ocean">' + (sw.ocean_trait || '') + '</div>'
+          + '<div class="sw-lbl">Gut reaction</div>'
+          + '<div class="sw-txt">' + (sw.initial_reaction || '') + '</div>'
+          + '<div class="sw-lbl">Next 48 hours</div>'
+          + '<div class="sw-txt">' + (sw.likely_action || '') + '</div>'
+          + '<div class="sw-watch">⚡ ' + (sw.watch_signal || '') + '</div>'
+          + '</div>';
+      }).join('') + '</div>'
+        + '<div style="font-family:var(--mono);font-size:7.5px;color:var(--tmut);margin-top:4px">OCEAN Swarm Simulator · 6 archetypes · How different people in this situation will actually respond</div>';
       p.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
