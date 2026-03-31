@@ -22,4 +22,4 @@ Allow: /
 User-agent: Googlebot
 Allow: /
 
-Sitemap: https://got-engine.vercel.app/sitemap.xml
+Sitemap: https://got.pithonix.ai/sitemap.xml
