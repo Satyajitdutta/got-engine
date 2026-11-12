@@ -1,0 +1,41 @@
+name: Atlas zero-cost technical smoke tests
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run isolated diagnostics
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p research-output
+          {
+            echo "ATLAS SMOKE TEST $(date -u)"
+            node --version
+            python3 --version
+            git --version
+            node --check api/proxy.js
+            for entry in 'MiroFish|https://github.com/mj3b/MiroFish.git' 'oasis|https://github.com/camel-ai/oasis.git' 'synthetic-focus-group|https://github.com/laymom/synthetic-focus-group.git'; do
+              name="${entry%%|*}"; url="${entry#*|}"
+              timeout 90 git clone --depth 1 "$url" "/tmp/$name" && git -C "/tmp/$name" rev-parse HEAD || echo "$name CLONE BLOCKED"
+            done
+            python3 -m venv /tmp/atlas-venv && /tmp/atlas-venv/bin/python -m pip --version || true
+            if [ -f /tmp/MiroFish/backend/requirements.txt ]; then
+              echo "MiroFish requirements found; package installation deferred to separate controlled run"
+            fi
+            if [ -d /tmp/oasis ]; then echo "OASIS source available; runtime not executed"; fi
+            if [ -d /tmp/synthetic-focus-group ]; then echo "Focus-group source available; Claude Code runtime not executed"; fi
+            echo "No paid model calls; no business simulations executed."
+          } 2>&1 | tee research-output/smoke.log
+      - name: Save diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-smoke-log
+          path: research-output/
+          retention-days: 3
