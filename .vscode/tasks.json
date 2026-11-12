@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Atlas: Setup and zero-cost smoke tests",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "${workspaceFolder}/research/atlas-setup.sh"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new",
+        "clear": false
+      },
+      "problemMatcher": []
+    }
+  ]
+}
