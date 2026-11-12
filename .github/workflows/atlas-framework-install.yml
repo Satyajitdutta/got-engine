@@ -1,0 +1,54 @@
+name: Atlas framework installation verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  framework-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Verify frameworks without paid model calls
+        shell: bash
+        run: |
+          mkdir -p atlas-results
+          set +e
+          exec > >(tee atlas-results/install.log) 2>&1
+          echo "START $(date -u)"
+          echo "node $(node -v) python $(python --version) uv $(uv --version)"
+          node --check api/proxy.js
+          echo "GOT_SYNTAX_EXIT=$?"
+          for item in 'MiroFish|https://github.com/mj3b/MiroFish.git' 'oasis|https://github.com/camel-ai/oasis.git' 'synthetic-focus-group|https://github.com/laymom/synthetic-focus-group.git'; do
+            name="${item%%|*}"; url="${item#*|}"
+            timeout 120 git clone --depth 1 "$url" "/tmp/$name"
+            echo "CLONE_$name=$?"
+            git -C "/tmp/$name" rev-parse HEAD || true
+          done
+          cd /tmp/MiroFish
+          timeout 600 npm run setup:all
+          echo "MIROFISH_INSTALL_EXIT=$?"
+          if [ -f frontend/package.json ]; then timeout 180 npm run build; echo "MIROFISH_BUILD_EXIT=$?"; fi
+          cd /tmp/oasis
+          timeout 600 uv sync --no-dev
+          echo "OASIS_INSTALL_EXIT=$?"
+          if [ -x .venv/bin/python ]; then .venv/bin/python -c "import oasis; print('OASIS_IMPORT_OK')"; echo "OASIS_IMPORT_EXIT=$?"; fi
+          if [ -f /tmp/synthetic-focus-group/agents/fgi-participant.md ]; then echo "FOCUS_GROUP_PARTICIPANT_SOURCE_PRESENT"; else echo "FOCUS_GROUP_PARTICIPANT_SOURCE_MISSING"; fi
+          if command -v claude >/dev/null; then echo "CLAUDE_CLI_PRESENT"; else echo "CLAUDE_CLI_ABSENT: cannot execute isolated focus group"; fi
+          echo "NO LLM API CALLS MADE. NO BUSINESS SIMULATIONS EXECUTED."
+          echo "FINISHED $(date -u)"
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-framework-installation
+          path: atlas-results/
+          retention-days: 7
